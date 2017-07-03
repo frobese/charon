@@ -32,6 +32,7 @@ def main(debug, step, local):
                 msg = match_obj.msg_response()
                 msg['from'] = "noreply@frobese.de"
                 msg['to'] = match_obj.recipient
+                msg.add_header('bcc', ", ".join(REPORT_RECIPIENTS))
                 msg.add_header('reply-to', REPLYTO_ADRESS)
                 if not sconn.sendmail(msg):
                     break

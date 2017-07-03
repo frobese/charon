@@ -130,18 +130,24 @@ class matched:
 
     def msg_response(self, report=False):
         msg = MIMEMultipart()
+
         if self.is_matched:
-            msg['subject'] = "{} - {}".format(
-                self.results['EMPLOYEE'][0], self.results['REASON'][0].title())
             msg.attach(MIMEText(self.string_respone()))
-        elif report:
-            msg['subject'] = "[No match for] {}".format(self.msg['subject'])
-        else:
+        elif not report:
+            # its not ma match and its not a report
             return None
 
-        if report:
+        if not report:
+            msg['subject'] = "{} - {}".format(
+                self.results['EMPLOYEE'][0], self.results['REASON'][0].title())
+        else:
             msg.attach(MIMEText(str(self)))
             msg.attach(MIMEText(self.payload))
+            if self.is_matched:
+                msg['subject'] = "[MATCH] {}".format(self.msg['subject'])
+            else:
+                msg['subject'] = "[NO MATCH] {}".format(self.msg['subject'])
+
         return msg
 
     @property

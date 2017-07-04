@@ -3,9 +3,11 @@
 
 import email
 import re
+import datetime
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.utils import format_datetime, localtime
 
 # Betreff: Urlaub / Krankheit / Verspätung
 
@@ -130,6 +132,7 @@ class matched:
 
     def msg_response(self, report=False):
         msg = MIMEMultipart()
+        msg['Date'] = format_datetime(localtime())
 
         if self.is_matched:
             msg.attach(MIMEText(self.string_respone()))

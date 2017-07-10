@@ -10,7 +10,67 @@ from email import message_from_string, message_from_file
 import config
 
 
-class imap_connector:
+class local_connector():
+
+    def connect(self):
+        return ('OK', []) if os.path.isdir(config.TEST_DATA) else ('NO', [])
+
+    def disconnect(self):
+        pass
+
+    def _fetch(self, selector=None, mbox=config.INPUTMAILBOX):
+        dump = []
+        for key, fp in enumerate(os.listdir(config.TEST_DATA)):
+            path = config.TEST_DATA+"/"+fp
+            dump.append((str(key), message_from_file(open(path, mode='r'))))
+        return dump
+
+    def fetch_all(self):
+        return self._fetch()
+
+    def fetch_unread(self):
+        return self._fetch()
+
+    def move(self, id, dest_mbox):
+        pass
+
+    def cleanup(self, mbox=config.INPUTMAILBOX):
+        pass
+
+    def sendmail(self, msg):
+        print(msg)
+
+
+class remote_connector:
+
+    def __init__(self):
+        self.iconn = _imap_connector()
+        self.sconn = _smtp_connector()
+
+    def connect(self):
+        self.sconn.connect()
+        return self.iconn.connect()
+
+    def disconnect(self):
+        return self.iconn.disconnect()
+
+    def fetch_all(self):
+        return self.iconn.fetch_all()
+
+    def fetch_unread(self):
+        return self.iconn.fetch_unread()
+
+    def move(self, id, dest_mbox):
+        return self.iconn.move(id, dest_mbox)
+
+    def cleanup(self, mbox=config.INPUTMAILBOX):
+        return self.iconn.cleanup(mbox)
+
+    def sendmail(self, msg):
+        return self.sconn.sendmail(msg)
+
+
+class _imap_connector:
 
     def connect(self):
         self.socket = IMAP4_SSL(host=config.HOST, port=config.IMAP_PORT)
@@ -31,7 +91,8 @@ class imap_connector:
                     dump[key] = message_from_string(body.decode('utf-8'))
                 else:
                     raise Exception()
-            return dump
+            return [(key, dump[key]) for key in sorted(
+                        dump.keys(), key=lambda item: int(item), reverse=True)]
         else:
             raise Exception()
 
@@ -47,12 +108,12 @@ class imap_connector:
             if status == 'OK':
                 self.socket.store(id, '+FLAGS', '\\Deleted')
 
-    def cleanup(self, mbox=config.INPUTMAILBOX):
+    def cleanup(self, mbox):
         self.socket.select(mbox)
         self.socket.expunge()
 
 
-class smtp_connector:
+class _smtp_connector:
 
     def connect(self):
         self.socket = SMTP(host=config.HOST, port=config.SMTP_PORT)
@@ -65,34 +126,3 @@ class smtp_connector:
             return True
         except(SMTPRecipientsRefused):
             return False
-
-
-class local_connector(imap_connector):
-
-    def connect(self):
-        return ('OK', []) if os.path.isdir(config.TEST_DATA) else ('NO', [])
-
-    def disconnect(self):
-        pass
-
-    def _fetch(self, selector=None, mbox=config.INPUTMAILBOX):
-        dump = {}
-        for key, fp in enumerate(os.listdir(config.TEST_DATA)):
-            path = config.TEST_DATA+"/"+fp
-            dump[str(key)] = message_from_file(open(path, mode='r'))
-        return dump
-
-    def fetch_all(self):
-        return self._fetch()
-
-    def fetch_unread(self):
-        return self._fetch()
-
-    def move(self, id, dest_mbox):
-        pass
-
-    def cleanup(self, mbox=config.INPUTMAILBOX):
-        pass
-
-    def sendmail(self, msg):
-        print(msg)

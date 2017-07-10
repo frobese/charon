@@ -6,7 +6,6 @@ HOST = "www.frobese.de"
 IMAP_PORT = 993
 SMTP_PORT = 587
 INPUTMAILBOX = "INBOX"
-MOVE = True
 
 REPORT_RECIPIENTS = [
     "nbomsdorf@frobese.de", "singelmann@frobese.de",

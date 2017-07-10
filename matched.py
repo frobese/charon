@@ -40,10 +40,13 @@ class matched:
     )
     reason_re = re.compile(r'(krankheit|urlaub)')
     contact_re = re.compile(r'[\w\.-]+@[\w\.-]+\.\w+')
-    employee_re = re.compile(r'(?<=\:)(?:\w+\s?)+(?:\,\s?\w+)?', re.UNICODE)
+    employee_re = re.compile(
+        r'(?<=\:)(?:\s?\w+){1,3}(?:\,\s?\w+)?(?:\W|$)(?!\w)', re.UNICODE)
+    # halftime_re = re.compile(r'(?<=\:)\s?(?:vormittag|nachmittag)')
 
     pars_lib = [
-        (["datum", "zeitraum"],
+        (
+            ["datum", "zeitraum"],
             time_re,
             lambda line:
                 (re.findall(
@@ -58,16 +61,28 @@ class matched:
                             chr(150), "")
                             )
                     )+[""])[0],
-            'DATE'),
-        (["grund"],
+            'DATE',
+            lambda result:
+                len(result) >= 1 and result != [""]
+        ),
+        (
+            ["grund"],
             reason_re,
             lambda line: line.lower().replace('krank', 'krankheit'),
-            'REASON'),
-        (["ansprechpartner", "benachricht"],
+            'REASON',
+            lambda result:
+                len(result) == 1 and result != [""]
+        ),
+        (
+            ["ansprechpartner", "benachricht"],
             contact_re,
             lambda line: line.lower(),
-            'CONTACT'),
-        (["mitarbeiter"],
+            'CONTACT',
+            lambda result:
+                len(result) >= 1 and result != [""]
+        ),
+        (
+            ["mitarbeiter"],
             employee_re,
             lambda line:
                 re.sub(
@@ -75,7 +90,18 @@ class matched:
                         r'\:\s*\+?\s*', ":", line.title()
                     )
                 ),
-            'EMPLOYEE')
+            'EMPLOYEE',
+            lambda result:
+                len(result) == 1 and result != [""]
+        ),
+        #  (
+        #      ["halbtags"],
+        #      halftime_re,
+        #      lambda line: line.lower(),
+        #      'HALVTIME',
+        #      lambda result:
+        #          (len(result) == 1 and result != [""]) or len(result) == 0
+        #  ),
     ]
 
     subject_lib = [
@@ -85,13 +111,7 @@ class matched:
 
     def __init__(self, msg):
         self.msg = msg
-        # TODO could be generated from the pars_lib
-        self.results = {
-            'DATE': [],
-            'REASON': [],
-            'CONTACT': [],
-            'EMPLOYEE': [],
-        }
+        self.results = {key: list() for _, _, _, key, _ in self.pars_lib}
 
         self.payload = self.fetch_payload(msg)
         self.match_payload(self.payload)
@@ -105,12 +125,12 @@ class matched:
         template = "{}: {}\n"
         for key, val in self.results.items():
             ret += template.format(key, ", ".join(val) or "<->")
+        ret += self.mismatch_reason()
         return ret
 
     def debug_output(self):
         ret = "{} -- matched: {}\n".format(self.msg['subject'][:20], self.is_matched)
         ret += str(self)
-        ret += self.mismatch_reason()
         ret += "+++ Automatic Message Mail " + "=" * 30 + "\n"
         ret += self.string_respone()
         ret += "+++ Postproccesed Mail " + "=" * 30 + "\n"
@@ -128,6 +148,8 @@ class matched:
             ", ".join(self.results['EMPLOYEE'][:1]),
             ", ".join(self.results['DATE']),
             ", ".join(self.results['REASON'][:1]))
+        #  " {}s ".format(
+        #      self.results['HALVTIME'][0]) if self.results['HALVTIME'] else " ")
         return txt
 
     def msg_response(self, report=False):
@@ -155,11 +177,10 @@ class matched:
 
     @property
     def is_matched(self):
-        return (
-            ([] not in self.results.values())
-            and ([""] not in self.results.values())
-            and len(self.results['EMPLOYEE']) == 1
-            and len(self.results['REASON']) == 1)
+        for _, _, _, key, validator in self.pars_lib:
+            if not validator(self.results[key]):
+                return False
+        return True
 
     def mismatch_reason(self):
         reason = ""
@@ -180,7 +201,7 @@ class matched:
     def match_payload(self, payload):
         comp = self.post_process(payload)
         for line in comp:
-            for buzzw, regex, post_proc, res_key in self.pars_lib:
+            for buzzw, regex, post_proc, res_key, _ in self.pars_lib:
                 if any(buzz in line.lower() for buzz in buzzw):
                     self.results[res_key].extend(
                         map(
@@ -194,14 +215,13 @@ class matched:
         return ", ".join(self.results['CONTACT'])
 
     def post_process(self, payload):
-        buzzwords = [buzz for subli, _, _, _ in self.pars_lib for buzz in subli]
+        buzzwords = [buzz for subli, _, _, _, _ in self.pars_lib for buzz in subli]
         cut_words = ["gruß", "freundlich", "kind", "grüß"]
         lines = [li for li in payload.splitlines() if li.strip(' >') is not '']
         compressed = [""]
 
         for line in lines:
             line = re.sub(r'(?:^>+|<mailto:.+>|\*)', "", line)
-            # line = re.sub(r'^>+', "", line)
             if any(buzz in line.lower() for buzz in buzzwords):
                 compressed.append(line)
             elif (line.strip('-').strip(' ') == "" or

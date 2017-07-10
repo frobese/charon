@@ -8,13 +8,13 @@ from matched import matched
 
 
 def imap_test_data():
-    from connector import imap_connector
+    from connector import _imap_connector
 
-    iconn = imap_connector()
+    iconn = _imap_connector()
     data = []
     if 'OK' == iconn.connect()[0]:
         for mbox in ['matched', 'unmatched']:
-            for _, msg in iconn._fetch('ALL', mbox).items():
+            for _, msg in iconn._fetch('ALL', mbox):
                     data.append((msg, mbox))
     else:
         pytest.fail("IMAP connection failed")
@@ -24,7 +24,10 @@ def imap_test_data():
 @pytest.mark.parametrize("msg, mbox", imap_test_data())
 def test_matching(msg, mbox):
     match_obj = matched(msg)
-    assert (match_obj.is_matched) == (mbox == 'matched')
+    if (mbox == 'matched'):
+        assert match_obj.is_matched
+    else:
+        assert not match_obj.is_matched
 
 
 def timere_data():

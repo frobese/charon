@@ -3,7 +3,4 @@
 conf_local.py
 .cache
 __pycache__
-edge_ex
-pos_ex
-neg_ex
 subset

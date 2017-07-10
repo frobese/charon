@@ -84,7 +84,7 @@ class _imap_connector:
         status, data = self.socket.search(None, selector)
         if status == 'OK':
             dump = {}
-            for key in data[0].decode('utf8').split(' '):
+            for key in [k for k in data[0].decode('utf8').split(' ') if k != '']:
                 status, mail = self.socket.fetch(key, '(RFC822)')
                 if status == 'OK':
                     _, body = mail[0]

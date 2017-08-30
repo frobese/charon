@@ -16,6 +16,7 @@ from datetime import datetime
 import argparse
 import os
 import logging
+import sys
 
 
 def main(connector):
@@ -89,7 +90,7 @@ def debug(connector, step, diff):
 
 
 if __name__ == "__main__":
-    logfile = "logs/log_{}.log".format(datetime.now().strftime("%d%m%y_%H%M"))
+    logfile = "{}/logs/log_{}.log".format(os.path.dirname(os.path.realpath(sys.argv[0])), datetime.now().strftime("%d%m%y_%H%M"))
     logging.basicConfig(filename=logfile, level=LOG_LEVEL, format="[%(levelname)s] %(message)s")
 
     parser = argparse.ArgumentParser(

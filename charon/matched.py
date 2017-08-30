@@ -15,62 +15,31 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import format_datetime, localtime
 
-# Betreff: Urlaub / Krankheit / Verspätung
+TEMPLATE = """
+Sehr geehrte Damen und Herren,
 
-# Datum/ Zeitraum*: TT.MM.JJ – TT.MM.JJ / XX Minuten
-# Grund: Freitext (optional)
-# Zu benachrichtigender Ansprechpartner*: Anrede; Name; Mailadresse
-# Name Mitarbeiter*: Vorname; Nachname
+dem Dateianhang können Sie die aktualisierte {} des
+{}-Beraters {} entnehmen.
 
-TEMPLATE = """Sehr geehrte Damen und Herren,
-
-Herr/Frau {} wird am {} {}sbedingt nicht im Projekt sein.
+Ich bitte Sie, diese Aktualisierung bei Ihrer weiteren Projektdurchführung
+im Projekt {} zu berücksichtigen.
 
 {}
 """
 
 class matched:
-    _date_subexp = r'(?:^|\s)(?:0?[1-9]|[1-3][0-9])\.(?:0?[1-9]|1[0-2])\.(?:(?:\d\d){1,2})?(?!\d)'
-    time_re = re.compile(
-        r'(?<!\-){}(?:\s-{})?'.format(_date_subexp, _date_subexp)
-    )
-    reason_re = re.compile(r'(krankheit|urlaub|schulung)')
     contact_re = re.compile(r'[\w\.-]+@[\w\.-]+\.\w+')
     employee_re = re.compile(
-        r'(?<=\:)(?:\s?\w+){1,3}(?:\,\s?\w+)?(?:\W|$)(?!\w)', re.UNICODE)
+        r'(?<=Beraters)(?:\s?\w+){1,3}(?:\,\s?\w+)?(?=\sentnehmen)', re.UNICODE)
+    project_re = re.compile(
+        r'(?<=Projekt\s)(?:\d+\s[\w-]+)', re.UNICODE)
+    topic_re = re.compile(r'(?:An- Abwesenheits|Aufgaben)(?:planung)')
+    comp_re = re.compile(r'\w+(?=-Beraters)')
     # halftime_re = re.compile(r'(?<=\:)\s?(?:vormittag|nachmittag)')
 
     pars_lib = [
         (
-            ["datum", "zeitraum"],
-            time_re,
-            lambda line:
-                (re.findall(
-                    r'(?<=\:)(?:[\d\-\,\.\+\&\;\/\s(?:\sMinuten\s)]*$)',
-                    re.sub(
-                        r'\s*\-\s*', " - ",
-                        line.replace(
-                            "bis", '-').replace(
-                            chr(8211), '-').replace(
-                            "heute", "").replace(
-                            "und", "").replace(
-                            chr(150), "")
-                            )
-                    )+[""])[0],
-            'DATE',
-            lambda result:
-                len(result) >= 1 and result != [""]
-        ),
-        (
-            ["grund"],
-            reason_re,
-            lambda line: line.lower().replace('krank', 'krankheit'),
-            'REASON',
-            lambda result:
-                len(result) == 1 and result != [""]
-        ),
-        (
-            ["ansprechpartner", "benachricht"],
+            ["sendto"],
             contact_re,
             lambda line: line.lower(),
             'CONTACT',
@@ -78,15 +47,34 @@ class matched:
                 len(result) >= 1 and result != [""]
         ),
         (
-            ["mitarbeiter"],
+            ["beraters"],
             employee_re,
-            lambda line:
-                re.sub(
-                    r'(?:;\s*|\s?(Herr|Frau)\s?)', ' ', re.sub(
-                        r'\:\s*\+?\s*', ":", line.title()
-                    )
-        ),
+            lambda line: line,
             'EMPLOYEE',
+            lambda result:
+                len(result) == 1 and result != [""]
+        ),
+        (
+            ["projekt"],
+            project_re,
+            lambda line: line,
+            'PROJECT',
+            lambda result:
+                len(result) == 1 and result != [""]
+        ),
+        (
+            ["planung"],
+            topic_re,
+            lambda line: line,
+            'TOPIC',
+            lambda result:
+                len(result) == 1 and result != [""]
+        ),
+        (
+            ["beraters"],
+            comp_re,
+            lambda line: line,
+            'COMP',
             lambda result:
                 len(result) == 1 and result != [""]
         ),
@@ -100,12 +88,7 @@ class matched:
         #  ),
     ]
 
-    subject_lib = [
-        ('urlaub', 'urlaub'),
-        ('krank', 'krankheit')
-    ]
-
-    def __init__(self, msg, keep_attachment, footer=""):
+    def __init__(self, msg, keep_attachment=False, footer=""):
         logging.info('MATCHER - init XScannerID: {}'.format(msg['X-MailScanner-ID']))
         self.msg = msg
         self.footer = footer
@@ -119,9 +102,7 @@ class matched:
         else:
             self.attachment = None
 
-        subj = self._match_subject(msg['subject'])
-        if not self.results['REASON'] and subj:
-            self.results['REASON'].append(subj)
+        self.subj = self._match_subject(msg['subject'])
         logging.info('MATCHER - done.')
 
     def __str__(self):
@@ -149,10 +130,12 @@ class matched:
 
     def string_respone(self):
         txt = TEMPLATE.format(
-            ", ".join(self.results['EMPLOYEE'][:1]),
-            ", ".join(self.results['DATE']),
-            ", ".join(self.results['REASON'][:1]),
-            self.footer)
+            "".join(self.results['TOPIC']),
+            "".join(self.results['COMP']),
+            "".join(self.results['EMPLOYEE']),
+            "".join(self.results['PROJECT']),
+            self.footer
+            )
         #  " {}s ".format(
         #      self.results['HALVTIME'][0]) if self.results['HALVTIME'] else " ")
         return txt 
@@ -170,8 +153,8 @@ class matched:
             return None
 
         if not report:
-            msg['subject'] = "{} - {}".format(
-                self.results['EMPLOYEE'][0], self.results['REASON'][0].title())
+            msg['subject'] = self.subj
+
         else:
             msg.attach(MIMEText(str(self)))
             msg.attach(MIMEText(self.payload))
@@ -190,20 +173,23 @@ class matched:
         return True
 
     def mismatch_reason(self):
-        reason = ""
-        for key, val in self.results.items():
-            if len(val) == 0:
-                reason += "{} hat keine einträge".format(key)
-            if (key == 'EMPLOYEE' or key == 'REASON') and len(val) > 1:
-                reason += "{} hat zu viele einträge".format(key)
-        return reason + '\n'
+        # TODO
+        return "Mismatch reason not implemented\n"
+        # reason = ""
+        # for key, val in self.results.items():
+        #     if len(val) == 0:
+        #         reason += "{} hat keine einträge".format(key)
+        #     if (key == 'EMPLOYEE' or key == 'REASON') and len(val) > 1:
+        #         reason += "{} hat zu viele einträge".format(key)
+        # return reason + '\n'
 
     def _match_subject(self, subject):
-        for buzz, reason in self.subject_lib:
-            if buzz in subject.lower():
-                return reason
-        else:
-            return None
+        return subject
+        # for buzz, reason in self.subject_lib:
+        #     if buzz in subject.lower():
+        #         return reason
+        # else:
+        #     return None
 
     def match_payload(self, payload):
         logging.info('MATCHER - matching')

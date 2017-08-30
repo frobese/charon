@@ -29,14 +29,12 @@ Herr/Frau {} wird am {} {}sbedingt nicht im Projekt sein.
 {}
 """
 
-
-
 class matched:
     _date_subexp = r'(?:^|\s)(?:0?[1-9]|[1-3][0-9])\.(?:0?[1-9]|1[0-2])\.(?:(?:\d\d){1,2})?(?!\d)'
     time_re = re.compile(
         r'(?<!\-){}(?:\s-{})?'.format(_date_subexp, _date_subexp)
     )
-    reason_re = re.compile(r'(krankheit|urlaub)')
+    reason_re = re.compile(r'(krankheit|urlaub|schulung)')
     contact_re = re.compile(r'[\w\.-]+@[\w\.-]+\.\w+')
     employee_re = re.compile(
         r'(?<=\:)(?:\s?\w+){1,3}(?:\,\s?\w+)?(?:\W|$)(?!\w)', re.UNICODE)
@@ -87,7 +85,7 @@ class matched:
                     r'(?:;\s*|\s?(Herr|Frau)\s?)', ' ', re.sub(
                         r'\:\s*\+?\s*', ":", line.title()
                     )
-                ),
+        ),
             'EMPLOYEE',
             lambda result:
                 len(result) == 1 and result != [""]
@@ -107,7 +105,7 @@ class matched:
         ('krank', 'krankheit')
     ]
 
-    def __init__(self, msg, footer=""):
+    def __init__(self, msg, keep_attachment, footer=""):
         logging.info('MATCHER - init XScannerID: {}'.format(msg['X-MailScanner-ID']))
         self.msg = msg
         self.footer = footer
@@ -116,6 +114,10 @@ class matched:
         logging.info('MATCHER - fetching payload')
         self.payload = self._fetch_payload(msg)
         self.match_payload(self.payload)
+        if keep_attachment:
+            self.attachment = self._fetch_attachment(msg)
+        else:
+            self.attachment = None
 
         subj = self._match_subject(msg['subject'])
         if not self.results['REASON'] and subj:
@@ -161,6 +163,8 @@ class matched:
 
         if self.is_matched:
             msg.attach(MIMEText(self.string_respone()))
+            if self.attachment:
+                msg.attach(self.attachment)
         elif not report:
             # its not ma match and its not a report
             return None
@@ -260,3 +264,11 @@ class matched:
             return payload
         logging.info('MATCHER - fetch: reached payload')
         return msg.get_payload()
+
+    def _fetch_attachment(self, msg):
+        for part in msg.walk():
+            if "pdf" in part.get_content_type():
+                logging.debug('[MATCHER] - attachment found')
+                return part
+        logging.error('[MATCHER] - no attachment found')
+        return MIMEText("No attachment was found")

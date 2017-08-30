@@ -6,8 +6,12 @@
 # coding=utf-8
 # !/usr/bin/env python3.5
 
-from charon.connector import remote_connector, local_connector
-from charon.matched import matched
+try:
+    from charon.connector import remote_connector, local_connector
+    from charon.matched import matched
+except ImportError:
+    from connector import remote_connector, local_connector
+    from matched import matched
 
 from datetime import datetime
 
@@ -37,7 +41,7 @@ def prod(connector, conf):
     logging.info('HANDLER - {} fetched'.format(len(messages)))
     for ID, msg in messages:
         logging.info('HANDLER - reached <{}>'.format(msg['subject']))
-        match_obj = matched(msg, footer=footer)
+        match_obj = matched(msg, conf.KEEP_ATTACHMENT, footer=footer)
         if match_obj.is_matched:
             logging.info('HANDLER - message {} matched'.format(ID))
             msg = match_obj.msg_response()
@@ -63,10 +67,10 @@ def prod(connector, conf):
             logging.debug('HANDLER - report composed')
             if connector.sendmail(report_msg):
                 if match_obj.is_matched:
-                    connector.copy(ID, 'matched')
+                    connector.move(ID, 'matched')
                 else:
                     connector.flag_awnsered(ID)
-                    connector.copy(ID, 'unmatched')
+                    connector.move(ID, 'unmatched')
             else:
                 logging.error(
                     'HANDLER - <{}> could not be send'.format(report_msg['subject']))
@@ -74,7 +78,7 @@ def prod(connector, conf):
             logging.error(
                     'HANDLER - no report recipients were configured')
     logging.info('HANDLER - done.')
-    # connector.cleanup()
+    connector.cleanup()
 
 
 def debug(connector, conf, step, diff):
@@ -93,8 +97,8 @@ def debug(connector, conf, step, diff):
     
     logging.info('HANLDER - {} fetched'.format(len(messages)))
     for ID, msg in messages:
-        match_obj = matched(msg, footer=footer)
-        if (diff and (match_obj.is_matched) == (conf.INPUTMAILBOX == 'matched')) or not diff:
+        match_obj = matched(msg, conf.KEEP_ATTACHMENT, footer=footer)
+        if (diff and (match_obj.is_matched) != (conf.INPUTMAILBOX == 'matched')) or not diff:
             print("MAILBOX: {}".format(conf.INPUTMAILBOX))
             print(match_obj.debug_output())
             if step:
@@ -113,4 +117,4 @@ def debug(connector, conf, step, diff):
                 elif inp == 'abort':
                     break
             os.system('clear')
-    # connector.cleanup()
+    connector.cleanup()

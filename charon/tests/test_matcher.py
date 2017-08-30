@@ -9,20 +9,34 @@
 import pytest
 import itertools
 
-from charon.matched import matched
+import sys
+import os
 
+PACKAGE_PARENT = '..'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
+sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
+
+from matched import matched
+from config import config
 
 def imap_test_data():
-    from charon.connector import _imap_connector
+    from connector import _imap_connector
 
-    iconn = _imap_connector()
+    try:
+        conf = config()
+    except:
+        pytest.fail("Config missing")
+
+    iconn = _imap_connector(conf)
     data = []
-    if iconn.connect():
-        for mbox in ['matched', 'unmatched']:
-            for _, msg in iconn._fetch('ALL', mbox):
-                    data.append((msg, mbox))
-    else:
-        pytest.fail("IMAP connection failed")
+    for mbox in ['matched', 'unmatched']:
+        conf._conf['MAIL']['INPUTMAILBOX'] = mbox
+        iconn = _imap_connector(conf)
+        if iconn.connect():
+            for _, msg in iconn._fetch('ALL'):
+                data.append((msg, mbox))
+        else:
+            pytest.fail("IMAP connection failed")
     return data
 
 

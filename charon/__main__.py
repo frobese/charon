@@ -1,8 +1,14 @@
-from charon.connector import remote_connector, local_connector
-from charon.matched import matched
-from charon.charon import prod, debug
+try:
+    from charon.connector import remote_connector, local_connector
+    from charon.matched import matched
+    from charon.charon import prod, debug
+    from charon.config import config
+except ImportError:
+    from connector import remote_connector, local_connector
+    from matched import matched
+    from charon import prod, debug
+    from config import config
 
-from charon.config import config
 
 from datetime import datetime
 

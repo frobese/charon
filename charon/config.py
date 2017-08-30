@@ -23,7 +23,8 @@ class config:
             'REPORT_RECIPIENTS' : 'john.doe@example.com, jane.doe@example.com',
             'ORIGIN' : 'noreply@example.com',
             'REPLY_TO' : 'james.doe@example.com',
-            'FOOTER_PATH' : None
+            'FOOTER_PATH' : "None",
+            'KEEP_ATTACHMENT' : False,
         }
         self._conf['MAIL'] = {
             'HOST': 'www.example.com',
@@ -60,6 +61,10 @@ class config:
     def FOOTER(self):
         ffp = self._conf.get('GENERAL','FOOTER_PATH')
         return ffp if ffp and ffp != "None" else None
+
+    @property
+    def KEEP_ATTACHMENT(self):
+        return self._conf.getboolean('GENERAL','KEEP_ATTACHMENT')
 
     @property
     def HOST(self):

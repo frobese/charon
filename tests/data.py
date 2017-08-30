@@ -1,3 +1,8 @@
+# Copyright (C) frobese GmbH - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Hans Goedeke <hgoedeke@frobese.de>, August 2017
+
 # coding=utf-8
 # !/usr/bin/env python3.5
 

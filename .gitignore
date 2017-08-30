@@ -4,3 +4,4 @@ conf_local.py
 .cache
 __pycache__
 subset
+*.log

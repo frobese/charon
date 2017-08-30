@@ -1,5 +1,12 @@
+# Copyright (C) frobese GmbH - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Hans Goedeke <hgoedeke@frobese.de>, August 2017
+
 # coding=utf-8
 # !/usr/bin/env python3.5
+
+import logging
 
 import email
 import re
@@ -110,15 +117,18 @@ class matched:
     ]
 
     def __init__(self, msg):
+        logging.info('MATCHER - init XScannerID: {}'.format(msg['X-MailScanner-ID']))
         self.msg = msg
         self.results = {key: list() for _, _, _, key, _ in self.pars_lib}
 
-        self.payload = self.fetch_payload(msg)
+        logging.info('MATCHER - fetching payload')
+        self.payload = self._fetch_payload(msg)
         self.match_payload(self.payload)
 
-        subj = self.match_subject(msg['subject'])
+        subj = self._match_subject(msg['subject'])
         if not self.results['REASON'] and subj:
             self.results['REASON'].append(subj)
+        logging.info('MATCHER - done.')
 
     def __str__(self):
         ret = ""
@@ -191,7 +201,7 @@ class matched:
                 reason += "{} hat zu viele einträge".format(key)
         return reason + '\n'
 
-    def match_subject(self, subject):
+    def _match_subject(self, subject):
         for buzz, reason in self.subject_lib:
             if buzz in subject.lower():
                 return reason
@@ -199,10 +209,12 @@ class matched:
             return None
 
     def match_payload(self, payload):
-        comp = self.post_process(payload)
+        logging.info('MATCHER - matching')
+        comp = self._pre_process(payload)
         for line in comp:
             for buzzw, regex, post_proc, res_key, _ in self.pars_lib:
                 if any(buzz in line.lower() for buzz in buzzw):
+                    logging.debug('MATCHER - match for {}'.format(res_key))
                     self.results[res_key].extend(
                         map(
                             str.strip,
@@ -214,7 +226,8 @@ class matched:
     def recipient(self):
         return ", ".join(self.results['CONTACT'])
 
-    def post_process(self, payload):
+    def _pre_process(self, payload):
+        logging.info('MATCHER - pre processing')
         buzzwords = [buzz for subli, _, _, _, _ in self.pars_lib for buzz in subli]
         cut_words = ["gruß", "freundlich", "kind", "grüß"]
         lines = [li for li in payload.splitlines() if li.strip(' >') is not '']
@@ -232,18 +245,25 @@ class matched:
         return [re.sub(
             r'\*?:\*?\s', ':', re.sub(r'\s\s+', " ", line)) for line in compressed]
 
-    def fetch_payload(self, msg):
+    def _fetch_payload(self, msg):
         if msg.is_multipart():
-            return self.fetch_payload(msg.get_payload()[0])
+            logging.debug('MATCHER - fetch: regular multipart')
+            return self._fetch_payload(msg.get_payload()[0])
         elif "multi" in msg.get_content_type():
-            return self.fetch_payload(email.message_from_string(msg.get_payload()))
+            logging.debug('MATCHER - fetch: iregular multipart')
+            return self._fetch_payload(email.message_from_string(msg.get_payload()))
         elif msg['Content-Transfer-Encoding'] in ['base64', 'quoted-printable']:
+            logging.debug('MATCHER - fetch: decoding')
             try:
                 payload = msg.get_payload(decode=True).decode('utf-8')
+                loggin.debug('MATCHER - fetch: decoding (utf-8)')
             except:
+                logging.debug('MATCHER - fetch: decoding (unicode escape)')
                 payload = msg.get_payload(decode=True).decode('unicode_escape')
             if "html" in msg['Content-Type']:
+                logging.debug('MATCHER - fetch: removing html artifacts')
                 payload = payload.replace('<br>', '\n').replace('</span>', '\n')
                 return re.sub(r'<.*?>', '', payload)
             return payload
+        logging.info('MATCHER - fetch: reached payload')
         return msg.get_payload()

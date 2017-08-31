@@ -10,7 +10,8 @@ import os
 import logging
 
 from imaplib import IMAP4_SSL
-from smtplib import SMTP, SMTPRecipientsRefused
+from smtplib import (SMTP, SMTPRecipientsRefused, SMTPHeloError,
+                     SMTPSenderRefused, SMTPDataError, SMTPNotSupportedError)
 from email import message_from_string, message_from_file
 
 import config

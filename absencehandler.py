@@ -38,7 +38,8 @@ def main(connector):
             msg.add_header('reply-to', REPLYTO_ADRESS)
             logging.debug('HANDLER - response composed')
             if not connector.sendmail(msg):
-                logging.critical('HANDLER - <{}> could not be send'.format(report_msg['subject']))
+                logging.critical(
+                    'HANDLER - <{}> could not be send'.format(msg['subject']))
                 break
             else:
                 connector.flag_awnsered(ID)
@@ -57,9 +58,10 @@ def main(connector):
                 connector.flag_awnsered(ID)
                 connector.copy(ID, 'unmatched')
         else:
-            logging.error('HANDLER - <{}> could not be send'.format(report_msg['subject']))
+            logging.error(
+                'HANDLER - <{}> could not be send'.format(report_msg['subject']))
     logging.info('HANDLER - done.')
-    #connector.cleanup()
+    # connector.cleanup()
 
 
 def debug(connector, step, diff):
@@ -86,12 +88,15 @@ def debug(connector, step, diff):
                 elif inp == 'abort':
                     break
             os.system('clear')
-    #connector.cleanup()
+    # connector.cleanup()
 
 
 if __name__ == "__main__":
-    logfile = "{}/logs/log_{}.log".format(os.path.dirname(os.path.realpath(sys.argv[0])), datetime.now().strftime("%d%m%y_%H%M"))
-    logging.basicConfig(filename=logfile, level=LOG_LEVEL, format="[%(levelname)s] %(message)s")
+    logfile = "{}/logs/log_{}.log".format(
+        os.path.dirname(
+            os.path.realpath(sys.argv[0])), datetime.now().strftime("%d%m%y_%H%M"))
+    logging.basicConfig(
+        filename=logfile, level=LOG_LEVEL, format="[%(levelname)s] %(message)s")
 
     parser = argparse.ArgumentParser(
         description="IMAP/STMP script handling absence messages, commands marked with [DEBUG] trigger the debug mode")

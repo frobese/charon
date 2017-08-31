@@ -10,7 +10,6 @@ import logging
 
 import email
 import re
-import datetime
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -256,7 +255,7 @@ class matched:
             logging.debug('MATCHER - fetch: decoding')
             try:
                 payload = msg.get_payload(decode=True).decode('utf-8')
-                loggin.debug('MATCHER - fetch: decoding (utf-8)')
+                logging.debug('MATCHER - fetch: decoding (utf-8)')
             except:
                 logging.debug('MATCHER - fetch: decoding (unicode escape)')
                 payload = msg.get_payload(decode=True).decode('unicode_escape')

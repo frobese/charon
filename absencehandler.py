@@ -107,8 +107,9 @@ if __name__ == "__main__":
         '-s', dest='step', action='store_const', const=True,
         default=False, help="[DEBUG] steps each mail")
     parser.add_argument(
-        '--diff', dest='diff', action='store_const', const=True,
-        default=False, help="[DEBUG] only shows wrongly assigned mails from matched or unmachted")
+        '--diff', dest='diff', action='store_const',
+        const=True, default=False,
+        help="[DEBUG] only shows wrongly assigned mails from matched or unmachted")
     parser.add_argument(
         '-l', dest='local', action='store_const', const=True,
         default=False, help="loads mails from TEST_DATA folder, send mails are displayed")

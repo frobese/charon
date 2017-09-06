@@ -38,7 +38,13 @@ class local_connector():
     def fetch_unread(self):
         return self._fetch()
 
+    def fetch_unawnsered(self):
+        return self._fetch()
+
     def move(self, id, dest_mbox):
+        pass
+
+    def copy(self, id, dest_mbox):
         pass
 
     def cleanup(self, mbox=config.INPUTMAILBOX):
@@ -46,6 +52,15 @@ class local_connector():
 
     def sendmail(self, msg):
         print(msg)
+
+    def flag_deleted(self, id):
+        pass
+
+    def flag_seen(self, id):
+        pass
+
+    def flag_awnsered(self, id):
+        pass
 
 
 class remote_connector:

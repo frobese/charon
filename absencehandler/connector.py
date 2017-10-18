@@ -11,24 +11,24 @@ import logging
 
 from imaplib import IMAP4_SSL
 from smtplib import (SMTP, SMTPRecipientsRefused, SMTPHeloError,
-                     SMTPSenderRefused, SMTPDataError, SMTPNotSupportedError)
+                     SMTPSenderRefused, SMTPDataError)
 from email import message_from_string, message_from_file
 
-import config
+from absencehandler.config import INPUTMAILBOX,TEST_DATA, HOST, IMAP_PORT, SMTP_PORT, USERNAME, PASSWORD
 
 
 class local_connector():
 
     def connect(self):
-        return ('OK', []) if os.path.isdir(config.TEST_DATA) else ('NO', [])
+        return ('OK', []) if os.path.isdir(TEST_DATA) else ('NO', [])
 
     def disconnect(self):
         pass
 
-    def _fetch(self, selector=None, mbox=config.INPUTMAILBOX):
+    def _fetch(self, selector=None, mbox=INPUTMAILBOX):
         dump = []
-        for key, fp in enumerate(os.listdir(config.TEST_DATA)):
-            path = config.TEST_DATA+'/'+fp
+        for key, fp in enumerate(os.listdir('absencehandler/' + TEST_DATA)):
+            path = 'absencehandler/' + TEST_DATA + '/' + fp
             dump.append((str(key), message_from_file(open(path, mode='r'))))
         return dump
 
@@ -47,7 +47,7 @@ class local_connector():
     def copy(self, id, dest_mbox):
         pass
 
-    def cleanup(self, mbox=config.INPUTMAILBOX):
+    def cleanup(self, mbox=INPUTMAILBOX):
         pass
 
     def sendmail(self, msg):
@@ -91,7 +91,7 @@ class remote_connector:
     def copy(self, id, dest_mbox):
         return self.iconn.copy(id, dest_mbox)
 
-    def cleanup(self, mbox=config.INPUTMAILBOX):
+    def cleanup(self, mbox=INPUTMAILBOX):
         return self.iconn.cleanup(mbox)
 
     def sendmail(self, msg):
@@ -111,18 +111,19 @@ class _imap_connector:
 
     def connect(self):
         logging.info('IMAP - establishing connection')
-        self.socket = IMAP4_SSL(host=config.HOST, port=config.IMAP_PORT)
-        (state, _) = self.socket.login(config.USERNAME, config.PASSWORD)
+        self.socket = IMAP4_SSL(host=HOST, port=IMAP_PORT)
+        (state, _) = self.socket.login(USERNAME, PASSWORD)
         if(state == 'OK'):
             logging.debug('IMAP - connection successful')
         else:
             logging.error('IMAP - connection failed')
+        return (state == 'OK')
 
     def disconnect(self):
         logging.info('IMAP - disconnect')
         return self.socket.logout()
 
-    def _fetch(self, selector, mbox=config.INPUTMAILBOX):
+    def _fetch(self, selector, mbox=INPUTMAILBOX):
         self.socket.select(mbox)
         logging.info('IMAP - probing {}'.format(mbox))
         status, data = self.socket.search(None, selector)
@@ -165,7 +166,7 @@ class _imap_connector:
             logging.error('IMAP - move aborted')
 
     def copy(self, id, dest_mbox):
-        if not dest_mbox == config.INPUTMAILBOX:
+        if not dest_mbox == INPUTMAILBOX:
             logging.info('IMAP - copy {} to {}'.format(id, dest_mbox))
             status, _ = self.socket.copy(id, dest_mbox)
             if status == 'OK':
@@ -197,9 +198,9 @@ class _smtp_connector:
 
     def connect(self):
         logging.info('SMTP - establishing connection')
-        self.socket = SMTP(host=config.HOST, port=config.SMTP_PORT)
+        self.socket = SMTP(host=HOST, port=SMTP_PORT)
         self.socket.starttls()
-        code, msg = self.socket.login(config.USERNAME, config.PASSWORD)
+        code, msg = self.socket.login(USERNAME, PASSWORD)
         logging.debug('SMTP - connection responce is {}: {}'.format(code, msg))
 
     def sendmail(self, msg):
@@ -218,7 +219,4 @@ class _smtp_connector:
             return False
         except(SMTPDataError):
             logging.critical('SMTP - data error')
-            return False
-        except(SMTPNotSupportedError):
-            logging.critical('SMTP - not supportet error')
             return False

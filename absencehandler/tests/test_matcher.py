@@ -9,15 +9,15 @@
 import pytest
 import itertools
 
-from matched import matched
+from absencehandler.matched import matched
 
 
 def imap_test_data():
-    from connector import _imap_connector
+    from absencehandler.connector import _imap_connector
 
     iconn = _imap_connector()
     data = []
-    if 'OK' == iconn.connect()[0]:
+    if iconn.connect():
         for mbox in ['matched', 'unmatched']:
             for _, msg in iconn._fetch('ALL', mbox):
                     data.append((msg, mbox))

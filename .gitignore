@@ -5,3 +5,5 @@ conf_local.py
 __pycache__
 subset
 *.log
+*.egg-info
+*.tar.gz

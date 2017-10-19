@@ -9,9 +9,6 @@
 from absencehandler.connector import remote_connector, local_connector
 from absencehandler.matched import matched
 
-from absencehandler.config import (REPORT_RECIPIENTS, INPUTMAILBOX, REPLYTO_ADRESS, 
-                    LOG_LEVEL, ORIG_ADRESS)
-
 from datetime import datetime
 
 import argparse
@@ -20,9 +17,9 @@ import logging
 import sys
 
 
-def prod(connector):
-    if not 'INBOX' == INPUTMAILBOX:
-        logging.error("HANDLER - {} not a valid prod mailbox".format(INPUTMAILBOX))
+def prod(connector, conf):
+    if not 'INBOX' == conf.INPUTMAILBOX:
+        logging.error("HANDLER - {} not a valid prod mailbox".format(conf.INPUTMAILBOX))
         return 0
 
     messages = connector.fetch_unawnsered()
@@ -33,10 +30,10 @@ def prod(connector):
         if match_obj.is_matched:
             logging.info('HANDLER - message {} matched'.format(ID))
             msg = match_obj.msg_response()
-            msg['from'] = ORIG_ADRESS
+            msg['from'] = conf.ORIG_ADRESS
             msg['to'] = match_obj.recipient
-            msg.add_header('bcc', ", ".join(REPORT_RECIPIENTS))
-            msg.add_header('reply-to', REPLYTO_ADRESS)
+            msg.add_header('bcc', ", ".join(conf.REPORT_RECIPIENTS))
+            msg.add_header('reply-to', conf.REPLY_TO)
             logging.debug('HANDLER - response composed')
             if not connector.sendmail(msg):
                 logging.critical(
@@ -47,11 +44,11 @@ def prod(connector):
         else:
             logging.info('HANDLER - message {} unmatched'.format(ID))
 
-        if REPORT_RECIPIENTS:
+        if conf.REPORT_RECIPIENTS:
             logging.info('HANDLER - composing report for {}'.format(ID))
             report_msg = match_obj.msg_response(report=True)
-            report_msg['from'] = ORIG_ADRESS
-            report_msg['to'] = ", ".join(REPORT_RECIPIENTS)
+            report_msg['from'] = conf.ORIG_ADRESS
+            report_msg['to'] = ", ".join(conf.REPORT_RECIPIENTS)
             logging.debug('HANDLER - report composed')
             if connector.sendmail(report_msg):
                 if match_obj.is_matched:
@@ -69,25 +66,25 @@ def prod(connector):
     # connector.cleanup()
 
 
-def debug(connector, step, diff):
+def debug(connector, conf, step, diff):
     messages = connector.fetch_all()
     logging.info('HANLDER - {} fetched'.format(len(messages)))
     for ID, msg in messages:
         match_obj = matched(msg)
-        if (diff and (match_obj.is_matched) == (INPUTMAILBOX == 'matched')) or not diff:
-            print("MAILBOX: {}".format(INPUTMAILBOX))
+        if (diff and (match_obj.is_matched) == (conf.INPUTMAILBOX == 'matched')) or not diff:
+            print("MAILBOX: {}".format(conf.INPUTMAILBOX))
             print(match_obj.debug_output())
             if step:
                 inp = input()
                 if (inp == 'move' and not (
-                        (INPUTMAILBOX == 'matched') == match_obj.is_matched)):
+                        (conf.INPUTMAILBOX == 'matched') == match_obj.is_matched)):
                     if match_obj.is_matched:
                         connector.move(ID, 'matched')
                     else:
                         connector.move(ID, 'unmatched')
                 elif inp == 'move':
                     print("MOVE FROM: {} TO {} NOT VALID".format(
-                        INPUTMAILBOX,
+                        conf.INPUTMAILBOX,
                         'matched' if match_obj.is_matched else 'unmatched'))
                     input()
                 elif inp == 'abort':

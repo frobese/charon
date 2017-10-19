@@ -6,41 +6,83 @@
 # coding=utf-8
 
 from logging import CRITICAL, ERROR, WARNING, INFO, DEBUG
+from configparser import ConfigParser
+import os
 
-try:
-    from absencehandler.conf_local import *
-except ImportError:
-    pass
+class config:
 
-# IMAP and SMTP HOST
-HOST = "www.frobese.de"
-# IMAP Port
-IMAP_PORT = 993
-#SMTP Port
-SMTP_PORT = 587
+    def __init__(self, write_conf=False):
+        self._conf = ConfigParser()
+        if not write_conf:
+            self.read_config()
+        else:
+            self.ceate_dafault_conf()
 
-# IMAP and SMTP credentials
-# USERNAME = "doe"
-# PASSWORD = "johnsmailbox123"
+    def ceate_dafault_conf(self):
+        self._conf['GENERAL'] = {
+            'REPORT_RECIPIENTS' : 'john.doe@example.com, jane.doe@example.com',
+            'ORIGIN' : 'noreply@example.com',
+            'REPLY_TO' : 'james.doe@example.com',
+        }
+        self._conf['MAIL'] = {
+            'HOST': 'www.example.com',
+            'IMAP_PORT' : 993,
+            'SMTP_PORT' : 587,
+            'USERNAME' : 'jdoe',
+            'PASSWORD' : 'secret123',
+            'INPUTMAILBOX' : 'INBOX'
+        }
+        self._conf['LOG'] = {
+            'LEVEL' : 'INFO',
+            'LOCATION' : '/tmp'
+        }
 
+        configfile = open(os.path.expanduser('~/.absenceh.cfg'), 'w')
+        self._conf.write(configfile)
 
-# Inbox on which the main loop shall work
-INPUTMAILBOX = "INBOX"
+    def read_config(self):
+        self._conf.read(os.path.expanduser('~/.absenceh.cfg'))
 
-# Recipients of the Report Messages
-REPORT_RECIPIENTS = [
-    "nbomsdorf@frobese.de", "singelmann@frobese.de",
-    "hgoedeke@frobese.de", "smeyer@frobese.de"
-]
+    @property
+    def REPORT_RECIPIENTS(self):
+        return self._conf.get('GENERAL','REPORT_RECIPIENTS').replace(' ','').split(',')
 
-# Logging
-LOG_LEVEL = DEBUG # [ CRITICAL | ERROR | WARNING | INFO | DEBUG ]
-LOG_DIR = "/tmp"
+    @property
+    def ORIG_ADRESS(self):
+        return self._conf.get('GENERAL','ORIG_ADRESS')
 
-# Origin Adress if the Mail response
-ORIG_ADRESS = "noreply@frobese.de"
-# Mailadress thats set as the "reply to"
-REPLYTO_ADRESS = "hgoedeke@frobese.de"
+    @property
+    def REPLY_TO(self):
+        return self._conf.get('GENERAL','REPLY_TO')      
 
-# Testing stuff
-TEST_DATA = "./subset"
+    @property
+    def HOST(self):
+        return self._conf.get('MAIL','HOST')
+
+    @property
+    def IMAP_PORT(self):
+        return self._conf.get('MAIL','IMAP_PORT')  
+
+    @property
+    def SMTP_PORT(self):
+        return self._conf.get('MAIL','SMTP_PORT')
+
+    @property
+    def USERNAME(self):
+        return self._conf.get('MAIL','USERNAME')  
+
+    @property
+    def PASSWORD(self):
+        return self._conf.get('MAIL','PASSWORD')
+
+    @property
+    def INPUTMAILBOX(self):
+        return self._conf.get('MAIL','INPUTMAILBOX')  
+
+    @property
+    def LEVEL(self):
+        return self._conf.get('LOG','LEVEL')
+
+    @property
+    def LOCATION(self):
+        return self._conf.get('LOG','LOCATION')

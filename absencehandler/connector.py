@@ -14,21 +14,21 @@ from smtplib import (SMTP, SMTPRecipientsRefused, SMTPHeloError,
                      SMTPSenderRefused, SMTPDataError)
 from email import message_from_string, message_from_file
 
-from absencehandler.config import INPUTMAILBOX,TEST_DATA, HOST, IMAP_PORT, SMTP_PORT, USERNAME, PASSWORD
-
-
 class local_connector():
 
+    def __init__(self, conf):
+        self._conf = conf
+
     def connect(self):
-        return ('OK', []) if os.path.isdir(TEST_DATA) else ('NO', [])
+        return ('OK', []) if os.path.isdir(self._conf.TEST_DATA) else ('NO', [])
 
     def disconnect(self):
         pass
 
-    def _fetch(self, selector=None, mbox=INPUTMAILBOX):
+    def _fetch(self, selector=None):
         dump = []
-        for key, fp in enumerate(os.listdir('absencehandler/' + TEST_DATA)):
-            path = 'absencehandler/' + TEST_DATA + '/' + fp
+        for key, fp in enumerate(os.listdir('absencehandler/' + self._conf.TEST_DATA)):
+            path = 'absencehandler/' + self._conf.TEST_DATA + '/' + fp
             dump.append((str(key), message_from_file(open(path, mode='r'))))
         return dump
 
@@ -47,7 +47,7 @@ class local_connector():
     def copy(self, id, dest_mbox):
         pass
 
-    def cleanup(self, mbox=INPUTMAILBOX):
+    def cleanup(self):
         pass
 
     def sendmail(self, msg):
@@ -65,9 +65,11 @@ class local_connector():
 
 class remote_connector:
 
-    def __init__(self):
-        self.iconn = _imap_connector()
-        self.sconn = _smtp_connector()
+    def __init__(self, conf):
+        self._conf = conf
+
+        self.iconn = _imap_connector(self._conf)
+        self.sconn = _smtp_connector(self._conf)
 
     def connect(self):
         self.sconn.connect()
@@ -91,8 +93,8 @@ class remote_connector:
     def copy(self, id, dest_mbox):
         return self.iconn.copy(id, dest_mbox)
 
-    def cleanup(self, mbox=INPUTMAILBOX):
-        return self.iconn.cleanup(mbox)
+    def cleanup(self):
+        return self.iconn.cleanup(self._conf.INPUTMAILBOX)
 
     def sendmail(self, msg):
         return self.sconn.sendmail(msg)
@@ -109,10 +111,13 @@ class remote_connector:
 
 class _imap_connector:
 
+    def __init__(self, conf):
+       self._conf = conf
+
     def connect(self):
         logging.info('IMAP - establishing connection')
-        self.socket = IMAP4_SSL(host=HOST, port=IMAP_PORT)
-        (state, _) = self.socket.login(USERNAME, PASSWORD)
+        self.socket = IMAP4_SSL(host=self._conf.HOST, port=self._conf.IMAP_PORT)
+        (state, _) = self.socket.login(self._conf.USERNAME, self._conf.PASSWORD)
         if(state == 'OK'):
             logging.debug('IMAP - connection successful')
         else:
@@ -123,9 +128,9 @@ class _imap_connector:
         logging.info('IMAP - disconnect')
         return self.socket.logout()
 
-    def _fetch(self, selector, mbox=INPUTMAILBOX):
-        self.socket.select(mbox)
-        logging.info('IMAP - probing {}'.format(mbox))
+    def _fetch(self, selector):
+        self.socket.select(self._conf.INPUTMAILBOX)
+        logging.info('IMAP - probing {}'.format(self._conf.INPUTMAILBOX))
         status, data = self.socket.search(None, selector)
         if status == 'OK':
             logging.debug('IMAP - probe successful')
@@ -166,7 +171,7 @@ class _imap_connector:
             logging.error('IMAP - move aborted')
 
     def copy(self, id, dest_mbox):
-        if not dest_mbox == INPUTMAILBOX:
+        if not dest_mbox == self._conf.INPUTMAILBOX:
             logging.info('IMAP - copy {} to {}'.format(id, dest_mbox))
             status, _ = self.socket.copy(id, dest_mbox)
             if status == 'OK':
@@ -196,11 +201,14 @@ class _imap_connector:
 
 class _smtp_connector:
 
+    def __init__(self, conf):
+       self._conf = conf
+
     def connect(self):
         logging.info('SMTP - establishing connection')
-        self.socket = SMTP(host=HOST, port=SMTP_PORT)
+        self.socket = SMTP(host=self._conf.HOST, port=self._conf.SMTP_PORT)
         self.socket.starttls()
-        code, msg = self.socket.login(USERNAME, PASSWORD)
+        code, msg = self.socket.login(self._conf.USERNAME, self._conf.PASSWORD)
         logging.debug('SMTP - connection responce is {}: {}'.format(code, msg))
 
     def sendmail(self, msg):

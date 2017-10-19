@@ -26,16 +26,7 @@ TEMPLATE = """Sehr geehrte Damen und Herren,
 
 Herr/Frau {} wird am {} {}sbedingt nicht im Projekt sein.
 
-Diese Nachricht wurde maschinell erzeugt.
-----
-frobese GmbH
-Andertensche Wiese 14
-D-30169 Hannover
-
-Rechtsform: GmbH
-Amtsgericht Hannover, Handelsregister: HRB 60066
-Vertretungsberechtigte Geschäftsführer:
-Dr. Dirk Frobese, Dr. Jochen Böhnke
+{}
 """
 
 
@@ -116,9 +107,10 @@ class matched:
         ('krank', 'krankheit')
     ]
 
-    def __init__(self, msg):
+    def __init__(self, msg, footer=""):
         logging.info('MATCHER - init XScannerID: {}'.format(msg['X-MailScanner-ID']))
         self.msg = msg
+        self.footer = footer
         self.results = {key: list() for _, _, _, key, _ in self.pars_lib}
 
         logging.info('MATCHER - fetching payload')
@@ -143,7 +135,7 @@ class matched:
         ret += str(self)
         ret += "+++ Automatic Message Mail " + "=" * 30 + "\n"
         ret += self.string_respone()
-        ret += "+++ Postproccesed Mail " + "=" * 30 + "\n"
+        ret += "+++ Postprocessed Mail " + "=" * 30 + "\n"
         lines = [li.strip(' >') for li in self.payload.replace(
                 '\n\n', '\n').splitlines()]
         for line in [li for li in lines if li is not ""]:
@@ -157,10 +149,11 @@ class matched:
         txt = TEMPLATE.format(
             ", ".join(self.results['EMPLOYEE'][:1]),
             ", ".join(self.results['DATE']),
-            ", ".join(self.results['REASON'][:1]))
+            ", ".join(self.results['REASON'][:1]),
+            self.footer)
         #  " {}s ".format(
         #      self.results['HALVTIME'][0]) if self.results['HALVTIME'] else " ")
-        return txt
+        return txt 
 
     def msg_response(self, report=False):
         msg = MIMEMultipart()
@@ -250,7 +243,7 @@ class matched:
             logging.debug('MATCHER - fetch: regular multipart')
             return self._fetch_payload(msg.get_payload()[0])
         elif "multi" in msg.get_content_type():
-            logging.debug('MATCHER - fetch: iregular multipart')
+            logging.debug('MATCHER - fetch: irregular multipart')
             return self._fetch_payload(email.message_from_string(msg.get_payload()))
         elif msg['Content-Transfer-Encoding'] in ['base64', 'quoted-printable']:
             logging.debug('MATCHER - fetch: decoding')

@@ -22,11 +22,22 @@ def prod(connector, conf):
         logging.error("HANDLER - {} not a valid prod mailbox".format(conf.INPUTMAILBOX))
         return 0
 
+    if conf.FOOTER:
+        try:
+            logging.info('HANDLER - Fetching footerfile')
+            footer_file = open(conf.FOOTER, 'r')
+            footer = "\n".join(footer_file.readlines())
+        except(IOError):
+            logging.error('HANDLER - Footerfile could not be opened')
+            footer = ""
+    else:
+        footer = ""
+
     messages = connector.fetch_unawnsered()
     logging.info('HANDLER - {} fetched'.format(len(messages)))
     for ID, msg in messages:
         logging.info('HANDLER - reached <{}>'.format(msg['subject']))
-        match_obj = matched(msg)
+        match_obj = matched(msg, footer=footer)
         if match_obj.is_matched:
             logging.info('HANDLER - message {} matched'.format(ID))
             msg = match_obj.msg_response()
@@ -68,9 +79,21 @@ def prod(connector, conf):
 
 def debug(connector, conf, step, diff):
     messages = connector.fetch_all()
+
+    if conf.FOOTER:
+        try:
+            logging.info('HANDLER - Fetching footerfile')
+            footer_file = open(conf.FOOTER, 'r')
+            footer = "".join(footer_file.readlines())
+        except(IOError):
+            logging.error('HANDLER - Footerfile could not be opened')
+            footer = ""
+    else:
+        footer = ""
+    
     logging.info('HANLDER - {} fetched'.format(len(messages)))
     for ID, msg in messages:
-        match_obj = matched(msg)
+        match_obj = matched(msg, footer=footer)
         if (diff and (match_obj.is_matched) == (conf.INPUTMAILBOX == 'matched')) or not diff:
             print("MAILBOX: {}".format(conf.INPUTMAILBOX))
             print(match_obj.debug_output())

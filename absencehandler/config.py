@@ -23,6 +23,7 @@ class config:
             'REPORT_RECIPIENTS' : 'john.doe@example.com, jane.doe@example.com',
             'ORIGIN' : 'noreply@example.com',
             'REPLY_TO' : 'james.doe@example.com',
+            'FOOTER_PATH' : None
         }
         self._conf['MAIL'] = {
             'HOST': 'www.example.com',
@@ -53,7 +54,12 @@ class config:
 
     @property
     def REPLY_TO(self):
-        return self._conf.get('GENERAL','REPLY_TO')      
+        return self._conf.get('GENERAL','REPLY_TO')  
+
+    @property
+    def FOOTER(self):
+        ffp = self._conf.get('GENERAL','FOOTER_PATH')
+        return ffp if ffp and ffp != "None" else None
 
     @property
     def HOST(self):

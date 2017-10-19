@@ -9,6 +9,7 @@ Lightweight adaptable Mailparser
 1. Run `$ pip3 install AbsenceHandler-x.x.x.tar.gz`
 2. Create a config file (`.absenceh.cfg`) with `$ absencehandler --crconf` which is placed in the home dir of the current user.
 
+**Important** At the moment the IMAP connection has to be IMAPv4 SSL and SMTP starttls
 ## Usage
 The queried Mail-Account has to have a `matched` and `unmatched` folder in which the handled mails are placed accordingly.
 

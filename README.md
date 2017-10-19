@@ -1,4 +1,4 @@
-# Absence Handler
+# Charon
 Lightweight adaptable Mailparser
 
 ## Requirements
@@ -6,8 +6,8 @@ Lightweight adaptable Mailparser
 * [PIP3](https://pypi.python.org/pypi/pip)
 
 ## Installation
-1. Run `$ pip3 install AbsenceHandler-x.x.x.tar.gz`
-2. Create a config file (`.absenceh.cfg`) with `$ absencehandler --crconf` which is placed in the home dir of the current user.
+1. Run `$ pip3 install charon-x.x.x.tar.gz`
+2. Create a config file (`.charon.cfg`) with `$ charon --crconf` which is placed in the home dir of the current user.
 
 **Important** At the moment the IMAP connection has to be IMAPv4 SSL and SMTP starttls
 ## Usage
@@ -15,5 +15,5 @@ The queried Mail-Account has to have a `matched` and `unmatched` folder in which
 
 The Footer used in the Mailresponse can be placed in any text-file and then configured in the config-file.
 
-The Handler has to be triggered with `$ absencehandler`, for example by cron.  
-To prevent bugs the complete path should be referenced in the crontab, `$ which absencehandler` shows it.
+The Handler has to be triggered with `$ charon`, for example by cron.  
+To prevent bugs the complete path should be referenced in the crontab, `$ which charon` shows it.

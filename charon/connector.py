@@ -27,8 +27,8 @@ class local_connector():
 
     def _fetch(self, selector=None):
         dump = []
-        for key, fp in enumerate(os.listdir('absencehandler/' + self._conf.TEST_DATA)):
-            path = 'absencehandler/' + self._conf.TEST_DATA + '/' + fp
+        for key, fp in enumerate(os.listdir('charon/' + self._conf.TEST_DATA)):
+            path = 'charon/' + self._conf.TEST_DATA + '/' + fp
             dump.append((str(key), message_from_file(open(path, mode='r'))))
         return dump
 

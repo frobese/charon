@@ -9,11 +9,11 @@
 import pytest
 import itertools
 
-from absencehandler.matched import matched
+from charon.matched import matched
 
 
 def imap_test_data():
-    from absencehandler.connector import _imap_connector
+    from charon.connector import _imap_connector
 
     iconn = _imap_connector()
     data = []

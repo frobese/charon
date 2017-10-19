@@ -38,11 +38,11 @@ class config:
             'LOCATION' : '/tmp'
         }
 
-        configfile = open(os.path.expanduser('~/.absenceh.cfg'), 'w')
+        configfile = open(os.path.expanduser('~/.charon.cfg'), 'w')
         self._conf.write(configfile)
 
     def read_config(self):
-        self._conf.read(os.path.expanduser('~/.absenceh.cfg'))
+        self._conf.read(os.path.expanduser('~/.charon.cfg'))
 
     @property
     def REPORT_RECIPIENTS(self):

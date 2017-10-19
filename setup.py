@@ -18,7 +18,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='AbsenceHandler',
+    name='charon',
 
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
@@ -56,7 +56,7 @@ setup(
     ],
 
     # What does your project relate to?
-    keywords='absencehandler email parser',
+    keywords='charon email parser',
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
@@ -100,7 +100,7 @@ setup(
     # pip to create the appropriate form of executable for the target platform.
     entry_points={
         'console_scripts': [
-            'absencehandler = absencehandler.__main__:main',
+            'charon = charon.__main__:main',
         ],
     },
 )

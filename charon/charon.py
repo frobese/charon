@@ -6,8 +6,8 @@
 # coding=utf-8
 # !/usr/bin/env python3.5
 
-from absencehandler.connector import remote_connector, local_connector
-from absencehandler.matched import matched
+from charon.connector import remote_connector, local_connector
+from charon.matched import matched
 
 from datetime import datetime
 

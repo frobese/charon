@@ -1,8 +1,8 @@
-from absencehandler.connector import remote_connector, local_connector
-from absencehandler.matched import matched
-from absencehandler.absencehandler import prod, debug
+from charon.connector import remote_connector, local_connector
+from charon.matched import matched
+from charon.charon import prod, debug
 
-from absencehandler.config import config
+from charon.config import config
 
 from datetime import datetime
 
@@ -44,7 +44,7 @@ def main():
         try:
             conf = config()
         except:
-            print("There is no config in ~/.absenceh.cfg")
+            print("There is no config in ~/.charon.cfg")
 
         logfile = "{}/ah_log_{}.log".format(
                 conf.LOCATION, datetime.now().strftime("%d%m%y_%H%M"))

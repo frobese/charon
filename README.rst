@@ -1,6 +1,6 @@
 ## Usage
 
-`$ absencehandler [-h] [-d] [--crconf] [-s] [--diff] [-l]`
+`$ charon [-h] [-d] [--crconf] [-s] [--diff] [-l]`
 
 ## Licence
     Copyright (C) frobese GmbH - All Rights Reserved

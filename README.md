@@ -1,13 +1,16 @@
 # Absence Handler
-Der **Absence Handler** ist ein stark konfigurierbar Mail verarbeitungs und antwort 
+Lightweight adaptable Mailparser
 
-## Vorraussetungen
+## Requirements
 * [Python3](https://www.python.org/download/releases/3.0/)
-## Installation
 
-## Konfiguration
-Alle nötigen einstellungen können in `config.py` oder `config_local.py` vorgenommen werden.
-## Lizenz
+## Installation
+1. Run `$ pip3 install AbsenceHandler-x.x.x.tar.gz`
+2. Create a default config file with `$ absencehandler --crconf` which is placed in the home dir of the current user.
+
+The Handler has to be triggered with `$ absencehandler`, for example by cron.  
+To prevent bugs the complete path should be referenced in the crontab, `$ which absencehandler` shows it.
+## Licence
     Copyright (C) frobese GmbH - All Rights Reserved
     Unauthorized copying, via any medium is strictly prohibited
     Proprietary and confidential

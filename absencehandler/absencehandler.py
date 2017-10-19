@@ -30,7 +30,7 @@ def prod(connector, conf):
         if match_obj.is_matched:
             logging.info('HANDLER - message {} matched'.format(ID))
             msg = match_obj.msg_response()
-            msg['from'] = conf.ORIG_ADRESS
+            msg['from'] = conf.ORIGIN
             msg['to'] = match_obj.recipient
             msg.add_header('bcc', ", ".join(conf.REPORT_RECIPIENTS))
             msg.add_header('reply-to', conf.REPLY_TO)
@@ -47,7 +47,7 @@ def prod(connector, conf):
         if conf.REPORT_RECIPIENTS:
             logging.info('HANDLER - composing report for {}'.format(ID))
             report_msg = match_obj.msg_response(report=True)
-            report_msg['from'] = conf.ORIG_ADRESS
+            report_msg['from'] = conf.ORIGIN
             report_msg['to'] = ", ".join(conf.REPORT_RECIPIENTS)
             logging.debug('HANDLER - report composed')
             if connector.sendmail(report_msg):

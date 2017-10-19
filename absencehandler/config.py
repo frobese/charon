@@ -48,8 +48,8 @@ class config:
         return self._conf.get('GENERAL','REPORT_RECIPIENTS').replace(' ','').split(',')
 
     @property
-    def ORIG_ADRESS(self):
-        return self._conf.get('GENERAL','ORIG_ADRESS')
+    def ORIGIN(self):
+        return self._conf.get('GENERAL','ORIGIN')
 
     @property
     def REPLY_TO(self):

@@ -23,9 +23,9 @@ def prod(connector, conf):
         return 0
 
     messages = connector.fetch_unawnsered()
-    logging.info('HANLDER - {} fetched'.format(len(messages)))
+    logging.info('HANDLER - {} fetched'.format(len(messages)))
     for ID, msg in messages:
-        logging.info('HANLDER - reached <{}>'.format(msg['subject']))
+        logging.info('HANDLER - reached <{}>'.format(msg['subject']))
         match_obj = matched(msg)
         if match_obj.is_matched:
             logging.info('HANDLER - message {} matched'.format(ID))

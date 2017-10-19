@@ -12,7 +12,7 @@ import logging
 from imaplib import IMAP4_SSL
 from smtplib import (SMTP, SMTPRecipientsRefused, SMTPHeloError,
                      SMTPSenderRefused, SMTPDataError)
-from email import message_from_string, message_from_file
+from email import message_from_bytes, message_from_file
 
 class local_connector():
 
@@ -141,7 +141,7 @@ class _imap_connector:
                 if status == 'OK':
                     logging.debug('IMAP - fetching mail successful')
                     _, body = mail[0]
-                    dump[key] = message_from_string(body.decode('utf-8'))
+                    dump[key] = message_from_bytes(body)
                 else:
                     logging.critical('IMAP - mail {} could not be fetched'.format(key))
                     raise Exception()

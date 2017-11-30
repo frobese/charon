@@ -16,11 +16,13 @@ In the end a copy of the original message is created in the IMAP folders `matche
     A default config looks like this:
 
         [GENERAL]
+        keep_attachment = false
         reply_to = james.doe@example.com
         origin = noreply@example.com
         report_recipients = john.doe@example.com, jane.doe@example.com
         footer_path = None
-
+    
+    `keep_attachment` determines if the **first** occurrence of an **pdf** attachment in the MIME-Tree is passed on in the response.  
     `reply_to` holds the mail address that is used in the reply to field for the response.  
     `origin` sets the mail address the response and report shall originate from.  
     `report_recipients` the recipients for the report messages.  

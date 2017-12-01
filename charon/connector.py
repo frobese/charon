@@ -194,7 +194,7 @@ class _imap_connector:
         self.socket.store(id, '+FLAGS', '\\Answered')
 
     def cleanup(self, mbox):
-        logging.info('IMAP - expunging {}'.format(mbox))
+        logging.warning('IMAP - expunging {}'.format(mbox))
         self.socket.select(mbox)
         self.socket.expunge()
 
@@ -205,11 +205,11 @@ class _smtp_connector:
        self._conf = conf
 
     def connect(self):
-        logging.info('SMTP - establishing connection')
+        logging.debug('SMTP - establishing connection')
         self.socket = SMTP(host=self._conf.HOST, port=self._conf.SMTP_PORT)
         self.socket.starttls()
         code, msg = self.socket.login(self._conf.USERNAME, self._conf.PASSWORD)
-        logging.debug('SMTP - connection responce is {}: {}'.format(code, msg))
+        logging.info('SMTP - connection responce is {}: {}'.format(code, msg))
 
     def sendmail(self, msg):
         try:

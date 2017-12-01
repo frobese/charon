@@ -15,6 +15,7 @@ from datetime import datetime
 import argparse
 import os
 import logging
+from logging import handlers
 import sys
 
 def main():
@@ -52,10 +53,17 @@ def main():
         except:
             print("There is no config in ~/.charon.cfg")
 
-        logfile = "{}/ah_log_{}.log".format(
-                conf.LOCATION, datetime.now().strftime("%d%m%y_%H%M"))
-        logging.basicConfig(
-            filename=logfile, level=conf.LEVEL, format="[%(levelname)s] %(message)s")
+        logfile = "{}/charon.log".format(
+                conf.LOCATION)
+        handler = handlers.TimedRotatingFileHandler(
+            logfile, when='midnight', backupCount=14
+        )
+        handler.setFormatter(logging.Formatter("%(relativeCreated)5d -- [%(levelname)s] %(message)s"))
+        handler.setLevel(conf.LEVEL)
+        # logging.basicConfig(evel=conf.LEVEL, format="%(asctime)s -- [%(levelname)s] %(message)s", handler=handler)
+        logging.root.setLevel(conf.LEVEL)
+        logging.root.addHandler(handler)
+        # logging.getLogger
 
         connector = remote_connector(conf) if not argset.local else local_connector(conf)
         connector.connect()

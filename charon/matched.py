@@ -111,6 +111,7 @@ class matched:
         self.footer = footer
         self.results = {key: list() for _, _, _, key, _ in self.pars_lib}
 
+        logging.info('MATCHER - fetching payload')
         self.payload = self._fetch_payload(msg)
         self.match_payload(self.payload)
         if keep_attachment:
@@ -244,7 +245,6 @@ class matched:
             r'\*?:\*?\s', ':', re.sub(r'\s\s+', " ", line)) for line in compressed]
 
     def _fetch_payload(self, msg):
-        logging.info('MATCHER - fetching payload')
         if msg.is_multipart():
             logging.debug('MATCHER - regular multipart')
             return self._fetch_payload(msg.get_payload()[0])

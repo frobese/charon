@@ -32,8 +32,8 @@ def prod(connector, conf):
             footer_file = open(conf.FOOTER, 'r')
             footer = "\n".join(footer_file.readlines())
         except(IOError):
-            logging.error('HANDLER - Footerfile could not be opened')
-            footer = ""
+            logging.critical('HANDLER - Footerfile could not be opened')
+            return 0
     else:
         footer = ""
 
@@ -92,8 +92,8 @@ def debug(connector, conf, step, diff):
             footer_file = open(conf.FOOTER, 'r')
             footer = "".join(footer_file.readlines())
         except(IOError):
-            logging.error('HANDLER - Footerfile could not be opened')
-            footer = ""
+            logging.critical('HANDLER - Footerfile could not be opened')
+            return 0
     else:
         footer = ""
     

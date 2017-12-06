@@ -16,19 +16,23 @@ from email import message_from_bytes, message_from_file
 
 class local_connector():
 
-    def __init__(self, conf):
+    def __init__(self, conf, path):
         self._conf = conf
+        if '~' in path:
+            self._path = os.path.expanduser(path)
+        else:
+            self._path = path
 
     def connect(self):
-        return ('OK', []) if os.path.isdir(self._conf.TEST_DATA) else ('NO', [])
+        return ('OK', []) if os.path.isdir(self._path) else ('NO', [])
 
     def disconnect(self):
         pass
 
     def _fetch(self, selector=None):
         dump = []
-        for key, fp in enumerate(os.listdir('charon/' + self._conf.TEST_DATA)):
-            path = 'charon/' + self._conf.TEST_DATA + '/' + fp
+        for key, fp in enumerate(os.listdir(self._path)):
+            path = self._path + '/' + fp
             dump.append((str(key), message_from_file(open(path, mode='r'))))
         return dump
 
@@ -52,6 +56,7 @@ class local_connector():
 
     def sendmail(self, msg):
         print(msg)
+        return True
 
     def flag_deleted(self, id):
         pass

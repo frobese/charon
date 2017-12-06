@@ -35,8 +35,7 @@ def main():
         const=True, default=False,
         help="[DEBUG] only shows wrongly assigned mails from matched or unmachted")
     parser.add_argument(
-        '-l', dest='local', action='store_const', const=True,
-        default=False, help="loads mails from TEST_DATA folder, send mails are displayed")
+        '-l', dest='local', metavar='PATH', type=str,help="loads mails from PATH, send mails are displayed")
 
     argset = parser.parse_args()
 
@@ -65,7 +64,7 @@ def main():
         logging.root.addHandler(handler)
         # logging.getLogger
 
-        connector = remote_connector(conf) if not argset.local else local_connector(conf)
+        connector = remote_connector(conf) if not argset.local else local_connector(conf, argset.local)
         connector.connect()
         if argset.debug or argset.step or argset.diff:
             debug(connector, conf, argset.step, argset.diff)

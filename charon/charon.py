@@ -32,15 +32,15 @@ def prod(connector, conf):
             footer_file = open(conf.FOOTER, 'r')
             footer = "\n".join(footer_file.readlines())
         except(IOError):
-            logging.error('HANDLER - Footerfile could not be opened')
-            footer = ""
+            logging.critical('HANDLER - Footerfile could not be opened')
+            return 0
     else:
         footer = ""
 
     messages = connector.fetch_unawnsered()
     logging.info('HANDLER - {} fetched'.format(len(messages)))
     for ID, msg in messages:
-        logging.info('HANDLER - reached <{}>'.format(msg['subject']))
+        logging.info('HANDLER - reached {} <{}>'.format(ID, msg['subject']))
         match_obj = matched(msg, conf.KEEP_ATTACHMENT, footer=footer)
         if match_obj.is_matched:
             logging.info('HANDLER - message {} matched'.format(ID))
@@ -52,7 +52,7 @@ def prod(connector, conf):
             logging.debug('HANDLER - response composed')
             if not connector.sendmail(msg):
                 logging.critical(
-                    'HANDLER - <{}> could not be send'.format(msg['subject']))
+                    'HANDLER - error while sending {}'.format(ID))
                 break
             else:
                 connector.flag_awnsered(ID)
@@ -73,16 +73,18 @@ def prod(connector, conf):
                     connector.move(ID, 'unmatched')
             else:
                 logging.error(
-                    'HANDLER - <{}> could not be send'.format(report_msg['subject']))
+                    'HANDLER - error while sending {}'.format(ID))
         else:
             logging.error(
                     'HANDLER - no report recipients were configured')
-    logging.info('HANDLER - done.')
+    logging.debug('HANDLER - done.')
     connector.cleanup()
 
 
 def debug(connector, conf, step, diff):
     messages = connector.fetch_all()
+
+    logging.warning('HANDLER - Running in debug mode')
 
     if conf.FOOTER:
         try:
@@ -90,13 +92,14 @@ def debug(connector, conf, step, diff):
             footer_file = open(conf.FOOTER, 'r')
             footer = "".join(footer_file.readlines())
         except(IOError):
-            logging.error('HANDLER - Footerfile could not be opened')
-            footer = ""
+            logging.critical('HANDLER - Footerfile could not be opened')
+            return 0
     else:
         footer = ""
     
     logging.info('HANLDER - {} fetched'.format(len(messages)))
     for ID, msg in messages:
+        logging.info('HANDLER - reached {} <{}>'.format(ID, msg['subject']))
         match_obj = matched(msg, conf.KEEP_ATTACHMENT, footer=footer)
         if (diff and (match_obj.is_matched) != (conf.INPUTMAILBOX == 'matched')) or not diff:
             print("MAILBOX: {}".format(conf.INPUTMAILBOX))

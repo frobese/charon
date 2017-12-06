@@ -16,19 +16,23 @@ from email import message_from_bytes, message_from_file
 
 class local_connector():
 
-    def __init__(self, conf):
+    def __init__(self, conf, path):
         self._conf = conf
+        if '~' in path:
+            self._path = os.path.expanduser(path)
+        else:
+            self._path = path
 
     def connect(self):
-        return ('OK', []) if os.path.isdir(self._conf.TEST_DATA) else ('NO', [])
+        return ('OK', []) if os.path.isdir(self._path) else ('NO', [])
 
     def disconnect(self):
         pass
 
     def _fetch(self, selector=None):
         dump = []
-        for key, fp in enumerate(os.listdir('charon/' + self._conf.TEST_DATA)):
-            path = 'charon/' + self._conf.TEST_DATA + '/' + fp
+        for key, fp in enumerate(os.listdir(self._path)):
+            path = self._path + '/' + fp
             dump.append((str(key), message_from_file(open(path, mode='r'))))
         return dump
 
@@ -52,6 +56,7 @@ class local_connector():
 
     def sendmail(self, msg):
         print(msg)
+        return True
 
     def flag_deleted(self, id):
         pass
@@ -194,7 +199,7 @@ class _imap_connector:
         self.socket.store(id, '+FLAGS', '\\Answered')
 
     def cleanup(self, mbox):
-        logging.info('IMAP - expunging {}'.format(mbox))
+        logging.warning('IMAP - expunging {}'.format(mbox))
         self.socket.select(mbox)
         self.socket.expunge()
 
@@ -205,11 +210,11 @@ class _smtp_connector:
        self._conf = conf
 
     def connect(self):
-        logging.info('SMTP - establishing connection')
+        logging.debug('SMTP - establishing connection')
         self.socket = SMTP(host=self._conf.HOST, port=self._conf.SMTP_PORT)
         self.socket.starttls()
         code, msg = self.socket.login(self._conf.USERNAME, self._conf.PASSWORD)
-        logging.debug('SMTP - connection responce is {}: {}'.format(code, msg))
+        logging.info('SMTP - connection responce is {}: {}'.format(code, msg))
 
     def sendmail(self, msg):
         try:

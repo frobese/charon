@@ -88,8 +88,13 @@ class matched:
         #  ),
     ]
 
-    def __init__(self, msg, keep_attachment=False, footer=""):
-        logging.info('MATCHER - init XScannerID: {}'.format(msg['X-MailScanner-ID']))
+    subject_lib = [
+        ('urlaub', 'urlaub'),
+        ('krank', 'krankheit')
+    ]
+
+    def __init__(self, msg, keep_attachment, footer=""):
+        logging.debug('MATCHER - init {}'.format(msg['subject']))
         self.msg = msg
         self.footer = footer
         self.results = {key: list() for _, _, _, key, _ in self.pars_lib}
@@ -148,8 +153,10 @@ class matched:
             msg.attach(MIMEText(self.string_respone()))
             if self.attachment:
                 msg.attach(self.attachment)
+                logging.debug('MATCHER - attachment appended')
         elif not report:
             # its not ma match and its not a report
+            logging.warning('MATCHER - unmatched response')
             return None
 
         if not report:
@@ -192,7 +199,7 @@ class matched:
         #     return None
 
     def match_payload(self, payload):
-        logging.info('MATCHER - matching')
+        logging.info('MATCHER - matching payload')
         comp = self._pre_process(payload)
         for line in comp:
             for buzzw, regex, post_proc, res_key, _ in self.pars_lib:
@@ -230,31 +237,31 @@ class matched:
 
     def _fetch_payload(self, msg):
         if msg.is_multipart():
-            logging.debug('MATCHER - fetch: regular multipart')
+            logging.debug('MATCHER - regular multipart')
             return self._fetch_payload(msg.get_payload()[0])
         elif "multi" in msg.get_content_type():
-            logging.debug('MATCHER - fetch: irregular multipart')
+            logging.info('MATCHER - irregular multipart')
             return self._fetch_payload(email.message_from_string(msg.get_payload()))
         elif msg['Content-Transfer-Encoding'] in ['base64', 'quoted-printable']:
-            logging.debug('MATCHER - fetch: decoding')
             try:
+                logging.debug('MATCHER - decoding (utf-8)')
                 payload = msg.get_payload(decode=True).decode('utf-8')
-                logging.debug('MATCHER - fetch: decoding (utf-8)')
             except:
-                logging.debug('MATCHER - fetch: decoding (unicode escape)')
+                logging.info('MATCHER - decoding (unicode escape)')
                 payload = msg.get_payload(decode=True).decode('unicode_escape')
+
             if "html" in msg['Content-Type']:
-                logging.debug('MATCHER - fetch: removing html artifacts')
+                logging.info('MATCHER - removing html artifacts')
                 payload = payload.replace('<br>', '\n').replace('</span>', '\n')
                 return re.sub(r'<.*?>', '', payload)
             return payload
-        logging.info('MATCHER - fetch: reached payload')
+        logging.debug('MATCHER - reached payload')
         return msg.get_payload()
 
     def _fetch_attachment(self, msg):
         for part in msg.walk():
             if "pdf" in part.get_content_type():
-                logging.debug('[MATCHER] - attachment found')
+                logging.debug('MATCHER - attachment found')
                 return part
-        logging.error('[MATCHER] - no attachment found')
+        logging.warning('MATCHER - no attachment found')
         return MIMEText("No attachment was found")

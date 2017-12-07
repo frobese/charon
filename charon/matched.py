@@ -24,9 +24,7 @@ from email.utils import format_datetime, localtime
 
 TEMPLATE = """Sehr geehrte Damen und Herren,
 
-Herr/Frau {} wird am {} {}sbedingt nicht im Projekt sein.
-
-{}
+Herr/Frau {} wird am {} {}sbedingt nicht im Projekt sein.{}
 """
 
 class matched:
@@ -38,7 +36,6 @@ class matched:
     contact_re = re.compile(r'[\w\.-]+@[\w\.-]+\.\w+')
     employee_re = re.compile(
         r'(?<=\:)(?:\s?\w+){1,3}(?:\,\s?\w+)?(?:\W|$)(?!\w)', re.UNICODE)
-    # halftime_re = re.compile(r'(?<=\:)\s?(?:vormittag|nachmittag)')
 
     pars_lib = [
         (
@@ -85,19 +82,11 @@ class matched:
                     r'(?:;\s*|\s?(Herr|Frau)\s?)', ' ', re.sub(
                         r'\:\s*\+?\s*', ":", line.title()
                     )
-        ),
+                ),
             'EMPLOYEE',
             lambda result:
                 len(result) == 1 and result != [""]
-        ),
-        #  (
-        #      ["halbtags"],
-        #      halftime_re,
-        #      lambda line: line.lower(),
-        #      'HALVTIME',
-        #      lambda result:
-        #          (len(result) == 1 and result != [""]) or len(result) == 0
-        #  ),
+        )
     ]
 
     subject_lib = [
@@ -137,7 +126,7 @@ class matched:
         ret += str(self)
         ret += "+++ Automatic Message Mail " + "=" * 30 + "\n"
         ret += self.string_respone()
-        ret += "+++ Postprocessed Mail " + "=" * 30 + "\n"
+        ret += "+++ Postprocessed Mail " + "=" * 34 + "\n"
         lines = [li.strip(' >') for li in self.payload.replace(
                 '\n\n', '\n').splitlines()]
         for line in [li for li in lines if li is not ""]:
@@ -148,13 +137,16 @@ class matched:
         return ret
 
     def string_respone(self):
+        if self.footer == "":
+            footer = self.footer
+        else:
+            footer = "\n\n---\n" + self.footer
+        
         txt = TEMPLATE.format(
             ", ".join(self.results['EMPLOYEE'][:1]),
             ", ".join(self.results['DATE']),
             ", ".join(self.results['REASON'][:1]),
-            self.footer)
-        #  " {}s ".format(
-        #      self.results['HALVTIME'][0]) if self.results['HALVTIME'] else " ")
+            footer)
         return txt 
 
     def msg_response(self, report=False):
@@ -228,7 +220,7 @@ class matched:
     def _pre_process(self, payload):
         logging.info('MATCHER - pre processing')
         buzzwords = [buzz for subli, _, _, _, _ in self.pars_lib for buzz in subli]
-        cut_words = ["gruß", "freundlich", "kind", "grüß"]
+        cut_words = ["gruß", "regards", "grüß"]
         lines = [li for li in payload.splitlines() if li.strip(' >') is not '']
         compressed = [""]
 

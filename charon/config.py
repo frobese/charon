@@ -8,8 +8,11 @@
 from logging import CRITICAL, ERROR, WARNING, INFO, DEBUG
 from configparser import ConfigParser
 import os
+import logging
 
 class config:
+
+    _footer = None
 
     def __init__(self, write_conf=False):
         self._conf = ConfigParser()
@@ -59,8 +62,22 @@ class config:
 
     @property
     def FOOTER(self):
-        ffp = self._conf.get('GENERAL','FOOTER_PATH')
-        return ffp if ffp and ffp != "None" else None
+        if not self._footer:
+            ffp = self._conf.get('GENERAL','FOOTER_PATH')
+
+            if ffp and ffp != "None":
+                try:
+                    logging.info('HANDLER - Fetching footerfile')
+                    footer_file = open(ffp, 'r')
+                    self._footer = "".join(footer_file.readlines())
+                except(IOError):
+                    logging.critical('HANDLER - Footerfile could not be opened')
+                    return 0
+            else:
+                self._footer = ""
+
+        return self._footer
+            
 
     @property
     def KEEP_ATTACHMENT(self):

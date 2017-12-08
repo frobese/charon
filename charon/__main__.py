@@ -9,13 +9,12 @@ except ImportError:
     from charon import prod, debug
     from config import config
 
-
-from datetime import datetime
+from logging import handlers
+from time import gmtime, strftime
 
 import argparse
 import os
 import logging
-from logging import handlers
 import sys
 
 def main():
@@ -63,6 +62,8 @@ def main():
         logging.root.setLevel(conf.LEVEL)
         logging.root.addHandler(handler)
         # logging.getLogger
+
+        logging.info("TIME OF EXEC {}".format(strftime("%H:%M:%S %Y-%m-%d", gmtime())))
 
         connector = remote_connector(conf) if not argset.local else local_connector(conf, argset.local)
         connector.connect()

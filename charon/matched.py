@@ -22,9 +22,7 @@ dem Dateianhang können Sie die aktualisierte {} des
 {}-Beraters {} entnehmen.
 
 Ich bitte Sie, diese Aktualisierung bei Ihrer weiteren Projektdurchführung
-im Projekt {} zu berücksichtigen.
-
-{}
+im Projekt {} zu berücksichtigen.{}
 """
 
 class matched:
@@ -77,15 +75,7 @@ class matched:
             'COMP',
             lambda result:
                 len(result) == 1 and result != [""]
-        ),
-        #  (
-        #      ["halbtags"],
-        #      halftime_re,
-        #      lambda line: line.lower(),
-        #      'HALVTIME',
-        #      lambda result:
-        #          (len(result) == 1 and result != [""]) or len(result) == 0
-        #  ),
+        )
     ]
 
     subject_lib = [
@@ -123,7 +113,7 @@ class matched:
         ret += str(self)
         ret += "+++ Automatic Message Mail " + "=" * 30 + "\n"
         ret += self.string_respone()
-        ret += "+++ Postprocessed Mail " + "=" * 30 + "\n"
+        ret += "+++ Postprocessed Mail " + "=" * 34 + "\n"
         lines = [li.strip(' >') for li in self.payload.replace(
                 '\n\n', '\n').splitlines()]
         for line in [li for li in lines if li is not ""]:
@@ -134,12 +124,17 @@ class matched:
         return ret
 
     def string_respone(self):
+        if self.footer == "":
+            footer = self.footer
+        else:
+            footer = "\n\n---\n" + self.footer
+        
         txt = TEMPLATE.format(
             "".join(self.results['TOPIC']),
             "".join(self.results['COMP']),
             "".join(self.results['EMPLOYEE']),
             "".join(self.results['PROJECT']),
-            self.footer
+            footer
             )
         #  " {}s ".format(
         #      self.results['HALVTIME'][0]) if self.results['HALVTIME'] else " ")
@@ -219,7 +214,7 @@ class matched:
     def _pre_process(self, payload):
         logging.info('MATCHER - pre processing')
         buzzwords = [buzz for subli, _, _, _, _ in self.pars_lib for buzz in subli]
-        cut_words = ["gruß", "freundlich", "kind", "grüß"]
+        cut_words = ["gruß", "regards", "grüß"]
         lines = [li for li in payload.splitlines() if li.strip(' >') is not '']
         compressed = [""]
 

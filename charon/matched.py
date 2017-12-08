@@ -30,7 +30,7 @@ im Projekt {} zu berücksichtigen.
 class matched:
     contact_re = re.compile(r'[\w\.-]+@[\w\.-]+\.\w+')
     employee_re = re.compile(
-        r'(?<=Beraters)(?:\s?\w+){1,3}(?:\,\s?\w+)?(?=\sentnehmen)', re.UNICODE)
+        r'(?<=Beraters)(?:\s?\w+){1,3}(?:\,\s?\w+)?(?=\s?\-)', re.UNICODE)
     project_re = re.compile(
         r'(?<=Projekt\s)(?:\d+\s[\w-]+)', re.UNICODE)
     topic_re = re.compile(r'(?:An- Abwesenheits|Aufgaben)(?:planung)')

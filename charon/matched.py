@@ -24,7 +24,9 @@ from email.utils import format_datetime, localtime
 
 TEMPLATE = """Sehr geehrte Damen und Herren,
 
-Herr/Frau {} wird am {} {}sbedingt nicht im Projekt sein.{}
+Herr/Frau {} wird am {} {}sbedingt nicht im Projekt sein.
+
+Diese Nachricht wurde maschinell erzeugt.{}
 """
 
 class matched:

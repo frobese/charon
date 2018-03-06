@@ -39,14 +39,15 @@ class config:
         }
         self._conf['LOG'] = {
             'LEVEL' : 'INFO',
-            'LOCATION' : '/tmp'
+            'LOCATION' : '/var/log'
         }
 
         configfile = open(os.path.expanduser('~/.charon.cfg'), 'w')
         self._conf.write(configfile)
 
     def read_config(self):
-        self._conf.read(os.path.expanduser('~/.charon.cfg'))
+        if not self._conf.read(os.path.expanduser('~/.charon.cfg')):
+            raise IOError
 
     @property
     def REPORT_RECIPIENTS(self):

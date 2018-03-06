@@ -50,6 +50,7 @@ def main():
             conf = config()
         except:
             print("There is no config in ~/.charon.cfg")
+            return 1
 
         logfile = "{}/charon.log".format(
                 conf.LOCATION)

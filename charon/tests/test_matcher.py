@@ -42,7 +42,7 @@ def imap_test_data():
 
 @pytest.mark.parametrize("msg, mbox", imap_test_data())
 def test_matching(msg, mbox):
-    match_obj = matched(msg)
+    match_obj = matched(msg, False)
     if (mbox == 'matched'):
         assert match_obj.is_matched
     else:

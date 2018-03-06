@@ -278,7 +278,12 @@ class matched:
     def _contact_validator(result):
         if len(result) <= 0 or result == [""]:
             return {False, "Keine einträge"}
-        elif any((any(um in contact) for um in ['ä', 'ö', 'ü', 'ß']) for contact in result):
+        elif any(
+                any(
+                    (um in contact) for um in ['ä', 'ö', 'ü', 'ß']
+                ) 
+                for contact in result
+            ):
             return {False, "umlate sind nicht zulässig"}
         else:
             return {True, None}

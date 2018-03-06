@@ -1,0 +1,1 @@
+sudo bash /opt/charon_init.sh

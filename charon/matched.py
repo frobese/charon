@@ -42,7 +42,7 @@ class matched:
             lambda line: line.lower(),
             'CONTACT',
             lambda result:
-                len(result) >= 1 and result != [""]
+                matched._geq_one_validator(result)
         ),
         (
             ["beraters"],
@@ -50,7 +50,7 @@ class matched:
             lambda line: line,
             'EMPLOYEE',
             lambda result:
-                len(result) == 1 and result != [""]
+                matched._eq_one_validator(result)
         ),
         (
             ["projekt"],
@@ -58,7 +58,7 @@ class matched:
             lambda line: line,
             'PROJECT',
             lambda result:
-                len(result) == 1 and result != [""]
+                matched._eq_one_validator(result)
         ),
         (
             ["planung"],
@@ -66,7 +66,7 @@ class matched:
             lambda line: line,
             'TOPIC',
             lambda result:
-                len(result) == 1 and result != [""]
+                matched._eq_one_validator(result)
         ),
         (
             ["beraters"],
@@ -74,7 +74,7 @@ class matched:
             lambda line: line,
             'COMP',
             lambda result:
-                len(result) == 1 and result != [""]
+                matched._eq_one_validator(result)
         )
     ]
 
@@ -170,20 +170,18 @@ class matched:
     @property
     def is_matched(self):
         for _, _, _, key, validator in self.pars_lib:
-            if not validator(self.results[key]):
+            valid, message = validator(self.results[key])
+            if not valid:
                 return False
         return True
 
     def mismatch_reason(self):
-        # TODO
-        return "Mismatch reason not implemented\n"
-        # reason = ""
-        # for key, val in self.results.items():
-        #     if len(val) == 0:
-        #         reason += "{} hat keine einträge".format(key)
-        #     if (key == 'EMPLOYEE' or key == 'REASON') and len(val) > 1:
-        #         reason += "{} hat zu viele einträge".format(key)
-        # return reason + '\n'
+        reason = ""
+        for _, _, _, key, validator in self.pars_lib:
+            valid, message = validator(self.results[key])
+            if not valid:
+                reason += "{} - {}\n".format(key, message)
+        return reason
 
     def _match_subject(self, subject):
         return subject
@@ -206,6 +204,8 @@ class matched:
                             regex.findall(post_proc(line))
                         )
                     )
+        for key, val in self.results.items():
+            self.results[key] = list(set(val))
 
     @property
     def recipient(self):
@@ -225,7 +225,7 @@ class matched:
             elif (line.strip('-').strip(' ') == "" or
                     any(mw in line.lower() for mw in cut_words)):
                 break
-            else:
+            elif ':' not in line:
                 compressed[-1] += " + " + line
         return [re.sub(
             r'\*?:\*?\s', ':', re.sub(r'\s\s+', " ", line)) for line in compressed]
@@ -260,3 +260,25 @@ class matched:
                 return part
         logging.warning('MATCHER - no attachment found')
         return MIMEText("No attachment was found")
+
+    def _eq_one_validator(result):
+        if len(result) == 1 and result != [""]:
+            return {True, None}
+        elif len(result) > 1:
+            return {False, "Zuviele einträge"}
+        else:
+            return {False, "Keine einträge"}
+
+    def _geq_one_validator(result):
+        if len(result) >= 1 and result != [""]:
+            return {True, None}
+        else:
+            return {False, "Keine einträge"}
+
+    def _contact_validator(result):
+        if len(result) <= 0 or result == [""]:
+            return {False, "Keine einträge"}
+        elif any(any(any(um in contact) for um in []) for contact in result):
+            return {False, "umlate sind nicht zulässig"}
+        else:
+            return {True, None}

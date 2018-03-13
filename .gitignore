@@ -7,3 +7,6 @@ subset
 *.log
 *.egg-info
 *.tar.gz
+*.img
+*.pdf
+docker

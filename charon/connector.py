@@ -11,10 +11,10 @@ import logging
 
 from imaplib import IMAP4_SSL
 from smtplib import (SMTP, SMTPRecipientsRefused, SMTPHeloError,
-                     SMTPSenderRefused, SMTPDataError)
+                     SMTPSenderRefused, SMTPDataError, SMTPAuthenticationError)
 from email import message_from_bytes, message_from_file
 
-class local_connector():
+class local_connector:
 
     def __init__(self, conf, path):
         self._conf = conf
@@ -77,11 +77,13 @@ class remote_connector:
         self.sconn = _smtp_connector(self._conf)
 
     def connect(self):
-        self.sconn.connect()
-        return self.iconn.connect()
+        return (self.iconn.connect() and self.sconn.connect())
 
     def disconnect(self):
         return self.iconn.disconnect()
+
+    def init_mboxes(self):
+        return self.iconn.init_mboxes()
 
     def fetch_all(self):
         return self.iconn.fetch_all()
@@ -122,16 +124,37 @@ class _imap_connector:
     def connect(self):
         logging.info('IMAP - establishing connection')
         self.socket = IMAP4_SSL(host=self._conf.HOST, port=self._conf.IMAP_PORT)
-        (state, _) = self.socket.login(self._conf.USERNAME, self._conf.PASSWORD)
-        if(state == 'OK'):
+        try:
+            (state, _) = self.socket.login(self._conf.USERNAME, self._conf.PASSWORD)
             logging.debug('IMAP - connection successful')
-        else:
+            return True
+        except:
             logging.error('IMAP - connection failed')
-        return (state == 'OK')
-
+        return False
     def disconnect(self):
         logging.info('IMAP - disconnect')
         return self.socket.logout()
+
+    def init_mboxes(self):
+        logging.info('IMAP - create missing mailboxes')
+        boxes = []
+        try:
+            current_boxes = [
+                bx.decode('utf-8').split(' "." ')[-1] 
+                    for bx in self.socket.list()[1]
+            ]
+            
+            boxes = [mbox for mbox in self._conf.LIST_BOXES if mbox not in current_boxes]
+        except:
+            logging.error('IMAP - failed to list mailboxes')
+
+        for mbox in boxes:
+            try:
+                self.socket.create(mbox)
+                logging.info('IMAP - created mailbox {}'.format(mbox))
+            except PermissionError:
+                logging.error('IMAP - failed to create mailbox {}'.format(mbox))
+
 
     def _fetch(self, selector):
         self.socket.select(self._conf.INPUTMAILBOX)
@@ -213,8 +236,13 @@ class _smtp_connector:
         logging.debug('SMTP - establishing connection')
         self.socket = SMTP(host=self._conf.HOST, port=self._conf.SMTP_PORT)
         self.socket.starttls()
-        code, msg = self.socket.login(self._conf.USERNAME, self._conf.PASSWORD)
-        logging.info('SMTP - connection responce is {}: {}'.format(code, msg))
+        try:
+            code, msg = self.socket.login(self._conf.USERNAME, self._conf.PASSWORD)
+            logging.info('SMTP - connection successful')
+            return True
+        except SMTPAuthenticationError:
+            logging.info('SMTP - connection failed')
+        return False
 
     def sendmail(self, msg):
         try:

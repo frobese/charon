@@ -22,9 +22,7 @@ import sys
 
 
 def prod(connector, conf):
-    if not 'INBOX' == conf.INPUTMAILBOX:
-        logging.error("HANDLER - {} not a valid prod mailbox".format(conf.INPUTMAILBOX))
-        return 0
+    connector.init_mboxes()
 
     messages = connector.fetch_unawnsered()
     logging.info('HANDLER - {} fetched'.format(len(messages)))
@@ -54,18 +52,17 @@ def prod(connector, conf):
             report_msg['from'] = conf.ORIGIN
             report_msg['to'] = ", ".join(conf.REPORT_RECIPIENTS)
             logging.debug('HANDLER - report composed')
-            if connector.sendmail(report_msg):
-                if match_obj.is_matched:
-                    connector.move(ID, 'matched')
-                else:
-                    connector.flag_awnsered(ID)
-                    connector.move(ID, 'unmatched')
-            else:
+            if not connector.sendmail(report_msg):
                 logging.error(
-                    'HANDLER - error while sending {}'.format(ID))
+                    'HANDLER - error while sending report for {}'.format(ID))
         else:
-            logging.error(
+            logging.warning(
                     'HANDLER - no report recipients were configured')
+
+        if match_obj.is_matched:
+            connector.move(ID, conf.POSITIVE_BOX)
+        else:
+            connector.move(ID, conf.NEGATIVE_BOX)
     logging.debug('HANDLER - done.')
     connector.cleanup()
 
@@ -79,21 +76,21 @@ def debug(connector, conf, step, diff):
     for ID, msg in messages:
         logging.info('HANDLER - reached {} <{}>'.format(ID, msg['subject']))
         match_obj = matched(msg, conf.KEEP_ATTACHMENT, conf.FOOTER)
-        if (diff and (match_obj.is_matched) != (conf.INPUTMAILBOX == 'matched')) or not diff:
+        if (diff and (match_obj.is_matched) != (conf.INPUTMAILBOX == conf.POSITIVE_BOX)) or not diff:
             print("MAILBOX: {}".format(conf.INPUTMAILBOX))
             print(match_obj.debug_output())
             if step:
                 inp = input()
                 if (inp == 'move' and not (
-                        (conf.INPUTMAILBOX == 'matched') == match_obj.is_matched)):
+                        (conf.INPUTMAILBOX == conf.POSITIVE_BOX) == match_obj.is_matched)):
                     if match_obj.is_matched:
-                        connector.move(ID, 'matched')
+                        connector.move(ID, conf.POSITIVE_BOX)
                     else:
-                        connector.move(ID, 'unmatched')
+                        connector.move(ID, conf.NEGATIVE_BOX)
                 elif inp == 'move':
                     print("MOVE FROM: {} TO {} NOT VALID".format(
                         conf.INPUTMAILBOX,
-                        'matched' if match_obj.is_matched else 'unmatched'))
+                        conf.POSITIVE_BOX if match_obj.is_matched else conf.NEGATIVE_BOX))
                     input()
                 elif inp == 'abort':
                     break

@@ -6,7 +6,7 @@
 # coding=utf-8
 
 from logging import CRITICAL, ERROR, WARNING, INFO, DEBUG
-from configparser import ConfigParser
+from configparser import ConfigParser, Error
 import os
 import logging
 
@@ -14,14 +14,15 @@ class config:
 
     _footer = None
 
-    def __init__(self, write_conf=False):
+    def __init__(self):
         self._conf = ConfigParser()
-        if not write_conf:
-            self.read_config()
-        else:
-            self.ceate_dafault_conf()
 
     def ceate_dafault_conf(self):
+        self.init_dafault_conf()
+        self.write_config()
+
+
+    def init_dafault_conf(self):
         self._conf['GENERAL'] = {
             'REPORT_RECIPIENTS' : 'john.doe@example.com, jane.doe@example.com',
             'ORIGIN' : 'noreply@example.com',
@@ -35,23 +36,58 @@ class config:
             'SMTP_PORT' : 587,
             'USERNAME' : 'jdoe',
             'PASSWORD' : 'secret123',
-            'INPUTMAILBOX' : 'INBOX'
+            'INPUTMAILBOX' : 'INBOX',
+            'POSITIVE_BOX': 'matched',
+            'NEGATIVE_BOX': 'unmatched'
         }
         self._conf['LOG'] = {
             'LEVEL' : 'INFO',
             'LOCATION' : '/var/log'
         }
 
+    def update_config(self, verbose = False):
+        if verbose:
+            print("Init defaults ...")
+        self.init_dafault_conf()
+        if verbose:
+            print("Read Config ...")
+        self.read_config()
+        if verbose:
+            print("Write updated config ...")
+        self.write_config()
+
+    def write_config(self):
         configfile = open(os.path.expanduser('~/.charon.cfg'), 'w')
         self._conf.write(configfile)
 
     def read_config(self):
         if not self._conf.read(os.path.expanduser('~/.charon.cfg')):
             raise IOError
+        if not self.self_check():
+            raise Error('Config is incomplete')
+
+    def self_check(self):
+        default = config()
+        default.init_dafault_conf()
+
+        for sect in default._conf.sections():
+            if not self._conf.has_section(sect):
+                return False
+
+            for opt in default._conf.options(sect):
+                if not self._conf.has_option(sect, opt):
+                    return False
+        return True
 
     @property
     def REPORT_RECIPIENTS(self):
-        return self._conf.get('GENERAL','REPORT_RECIPIENTS').replace(' ','').split(',')
+        return [
+            rec for rec in 
+            self._conf.get(
+                'GENERAL','REPORT_RECIPIENTS'
+            ).replace(' ','').split(',') 
+            if rec is not ''
+        ]
 
     @property
     def ORIGIN(self):
@@ -106,7 +142,17 @@ class config:
 
     @property
     def INPUTMAILBOX(self):
-        return self._conf.get('MAIL','INPUTMAILBOX')  
+        return self._conf.get('MAIL','INPUTMAILBOX')
+    @property
+    def POSITIVE_BOX(self):
+        return self._conf.get('MAIL', 'POSITIVE_BOX')
+    @property
+    def NEGATIVE_BOX(self):
+        return self._conf.get('MAIL', 'NEGATIVE_BOX')
+
+    @property
+    def LIST_BOXES(self):
+        return [self.INPUTMAILBOX, self.POSITIVE_BOX, self.NEGATIVE_BOX]
 
     @property
     def LEVEL(self):

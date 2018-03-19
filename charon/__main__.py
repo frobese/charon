@@ -63,7 +63,7 @@ def main():
             conf = config()
             conf.read_config()
         except IOError:
-            print("There is no config in ~/.charon.cfg")
+            print("There is no config in ~/charon.cfg")
             return 1
         except Error:
             print("Config is incomplete")

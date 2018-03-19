@@ -11,7 +11,7 @@ In the end a copy of the original message is created in the IMAP folders `matche
 
 ## Installation
 1. Run `$ pip3 install charon-x.x.x.tar.gz`
-2. Create a config file (`.charon.cfg`) with `$ charon --crconf` which is placed in the home dir of the current user.
+2. Create a config file (`charon.cfg`) with `$ charon --crconf` which is placed in the home dir of the current user.
 
     A default config looks like this:
 

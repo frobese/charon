@@ -27,8 +27,8 @@ class config:
             'REPORT_RECIPIENTS' : 'john.doe@example.com, jane.doe@example.com',
             'ORIGIN' : 'noreply@example.com',
             'REPLY_TO' : 'james.doe@example.com',
-            'FOOTER_PATH' : "None",
-            'KEEP_ATTACHMENT' : False,
+            'FOOTER_PATH' : "~/charon_signature.txt",
+            'KEEP_ATTACHMENT' : True,
         }
         self._conf['MAIL'] = {
             'HOST': 'www.example.com',
@@ -36,9 +36,9 @@ class config:
             'SMTP_PORT' : 587,
             'USERNAME' : 'jdoe',
             'PASSWORD' : 'secret123',
-            'INPUTMAILBOX' : 'INBOX',
-            'POSITIVE_BOX': 'matched',
-            'NEGATIVE_BOX': 'unmatched'
+            'INPUTMAILBOX' : 'planung',
+            'POSITIVE_BOX': 'erledigt',
+            'NEGATIVE_BOX': 'todo'
         }
         self._conf['LOG'] = {
             'LEVEL' : 'INFO',
@@ -57,11 +57,11 @@ class config:
         self.write_config()
 
     def write_config(self):
-        configfile = open(os.path.expanduser('~/.charon.cfg'), 'w')
+        configfile = open(os.path.expanduser('~/charon.cfg'), 'w')
         self._conf.write(configfile)
 
     def read_config(self):
-        if not self._conf.read(os.path.expanduser('~/.charon.cfg')):
+        if not self._conf.read(os.path.expanduser('~/charon.cfg')):
             raise IOError
         if not self.self_check():
             raise Error('Config is incomplete')
@@ -101,6 +101,7 @@ class config:
     def FOOTER(self):
         if not self._footer:
             ffp = self._conf.get('GENERAL','FOOTER_PATH')
+            ffp = os.path.expanduser(ffp) if '~' in ffp else ffp
 
             if ffp and ffp != "None":
                 try:

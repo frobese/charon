@@ -1,0 +1,1 @@
+ACTION=="add", ATTRS{idVendor}=="****", ATTRS{idProduct}=="****", TAG+="systemd", ENV{SYSTEMD_WANTS}="charon-sync.service"

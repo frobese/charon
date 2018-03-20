@@ -10,3 +10,4 @@ subset
 *.img
 *.pdf
 docker
+mnt

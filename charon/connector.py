@@ -251,13 +251,12 @@ class _smtp_connector:
             return True
         except(SMTPRecipientsRefused):
             logging.critical('STMP - recipients refused')
-            return False
         except(SMTPHeloError):
             logging.critical('SMTP - helo error')
-            return False
         except(SMTPSenderRefused):
             logging.critical('SMTP - sender refused')
-            return False
         except(SMTPDataError):
             logging.critical('SMTP - data error')
-            return False
+        except:
+            logging.critical('SMTP - unknown error')
+        return False

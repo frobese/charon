@@ -10,7 +10,7 @@ except ImportError:
     from config import config
 
 from logging import handlers
-from time import gmtime, strftime
+from time import localtime, strftime
 from configparser import Error
 
 import argparse
@@ -84,7 +84,7 @@ def main():
         logging.root.setLevel(conf.LEVEL)
         logging.root.addHandler(handler)
 
-        logging.info("TIME OF EXEC {}".format(strftime("%H:%M:%S %Y-%m-%d", gmtime())))
+        logging.info("TIME OF EXEC {}".format(strftime("%H:%M:%S %Y-%m-%d", localtime())))
 
         connector = remote_connector(conf) if not argset.local else local_connector(conf, argset.local)
         if connector.connect():

@@ -123,13 +123,21 @@ class _imap_connector:
 
     def connect(self):
         logging.info('IMAP - establishing connection')
-        self.socket = IMAP4_SSL(host=self._conf.HOST, port=self._conf.IMAP_PORT)
+        try:
+            self.socket = IMAP4_SSL(host=self._conf.HOST, port=self._conf.IMAP_PORT)
+        except Exception as exp:
+            logging.critical('IMAP - socket error :: {}'.format(exp))
+            return False
         try:
             (state, _) = self.socket.login(self._conf.USERNAME, self._conf.PASSWORD)
             logging.debug('IMAP - connection successful')
             return True
+        except UnicodeError:
+            logging.critical('IMAP - Username or Password contains non-ascii characters')
+        
         except:
             logging.error('IMAP - connection failed')
+            
         return False
     def disconnect(self):
         logging.info('IMAP - disconnect')
@@ -234,12 +242,18 @@ class _smtp_connector:
 
     def connect(self):
         logging.debug('SMTP - establishing connection')
-        self.socket = SMTP(host=self._conf.HOST, port=self._conf.SMTP_PORT)
-        self.socket.starttls()
+        try:
+            self.socket = SMTP(host=self._conf.HOST, port=self._conf.SMTP_PORT)
+            self.socket.starttls()
+        except Exception as exp:
+            logging.critical('SMTP - socket error :: {}'.format(exp))
+            return False
         try:
             code, msg = self.socket.login(self._conf.USERNAME, self._conf.PASSWORD)
             logging.info('SMTP - connection successful')
             return True
+        except UnicodeError:
+            logging.critical('SMTP - Username or Password contains non-ascii characters')
         except SMTPAuthenticationError:
             logging.info('SMTP - connection failed')
         return False

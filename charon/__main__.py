@@ -72,9 +72,12 @@ def main():
         logfile = "{}/charon.log".format(conf.LOCATION)
 
         try:
-            handler = handlers.TimedRotatingFileHandler(
-                logfile, when='midnight', backupCount=14
-            )
+            if argset.debug:
+                handler = logging.StreamHandler(sys.stdout)
+            else:        
+                handler = handlers.TimedRotatingFileHandler(
+                    logfile, when='midnight', backupCount=14
+                )
         except PermissionError:
             print("Unable to access logfile")
             return 1
